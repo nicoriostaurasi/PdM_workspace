@@ -46,6 +46,7 @@ Las siguientes preguntas se proponen para reflexionar luego de resolver el ejerc
 ### 1. ¿Se pueden cambiar los tiempos de encendido fácilmente o están hardcodeados?
 
 Si, desde el uso de macro para los periódos del 50% es cuestión de agregar una nueva macro o cambiar el valor a una existente, ya estan referenciadas para mS y se puede referenciar a segundos incluso (tener cuidado en utilizar el sistick para tiempos grandes ya que existen otros tipo de timers diseñados para estas funciones).
+
 ---
 
 ### 2. ¿Qué bibliotecas estándar se debieron agregar para que el código compile? Si las funcionalidades crecieran, habría que pensar cuál sería el mejor lugar para incluir esas bibliotecas y algunos typedefs que se usan en el ejercicio.
