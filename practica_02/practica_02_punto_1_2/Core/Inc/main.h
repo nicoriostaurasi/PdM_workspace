@@ -74,6 +74,11 @@ void Error_Handler(void);
 #define SWO_Pin GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
 
+#define MS_TO_TICK 1
+#define _100_MS_TO_TICK (100*MS_TO_TICK)
+#define _500_MS_TO_TICK (500*MS_TO_TICK)
+#define _1000_MS_TO_TICK (1000*MS_TO_TICK)
+
 /* USER CODE BEGIN Private defines */
 typedef uint32_t tick_t; // Qué biblioteca se debe incluir para que esto compile?
 //stdint.h

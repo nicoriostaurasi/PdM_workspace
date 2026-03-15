@@ -26,7 +26,6 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
-
 // Punto 1
 void delayInit( delay_t * delay, tick_t duration ){
 	delay->duration = duration;
@@ -55,7 +54,6 @@ void delayWrite( delay_t * delay, tick_t duration){
 }
 
 
-
 /**
   * @brief  The application entry point.
   * @retval int
@@ -72,22 +70,32 @@ int main(void)
   MX_GPIO_Init();
 
   MX_USART2_UART_Init();
-  /* USER CODE BEGIN 2 */
 
   delay_t myDelay;
+  int i = 0;
+  int j = 0;
 
   memset(&myDelay, 0 ,sizeof(myDelay));
 
+  tick_t delayVector[] = {_100_MS_PERIOD_50P_DUTY, _500_MS_PERIOD_50P_DUTY, _1000_PERIOD_50P_DUTY};
 
   // Punto 2)
   // Inicio el delay de 100mS
-  delayInit(&myDelay, 100);
+  delayInit(&myDelay, delayVector[0]);
 
-    while (1)
+  while(1)
   {
-    /* USER CODE END WHILE */
-	  if(delayRead(&myDelay)){
-		  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+	  for(j=0;j<3;j++)
+	  {
+		delayWrite(&myDelay,delayVector[j]);
+		i=0;
+		do{
+			if(delayRead(&myDelay)){
+				HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+				i++;
+			}
+		}
+		while(i<10);
 	  }
   }
 }
