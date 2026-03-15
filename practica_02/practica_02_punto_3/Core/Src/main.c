@@ -26,6 +26,10 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
+#define BLINK_TIMES 5
+#define TOGGLE_TIMES (2*BLINK_TIMES)
+
+
 // Punto 1
 void delayInit( delay_t * delay, tick_t duration ){
 	delay->duration = duration;
@@ -95,7 +99,7 @@ int main(void)
 				i++;
 			}
 		}
-		while(i<10);
+		while(i<TOGGLE_TIMES);
 	  }
   }
 }
