@@ -155,7 +155,7 @@ void SystemClock_Config(void)
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
-s  }
+  }
 
   /** Initializes the CPU, AHB and APB buses clocks
   */
