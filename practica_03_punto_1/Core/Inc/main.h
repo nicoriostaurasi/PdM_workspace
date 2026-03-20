@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2026 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -31,8 +31,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdbool.h>
-#include <stdint.h>
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -42,17 +41,6 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-
-typedef uint32_t tick_t; // Qué biblioteca se debe incluir para que esto compile?
-typedef bool bool_t;	  // Qué biblioteca se debe incluir para que esto compile?
-typedef struct{
-   tick_t startTime;
-   tick_t duration;
-   bool_t running;
-} delay_t;
-void delayInit( delay_t * delay, tick_t duration );
-bool_t delayRead( delay_t * delay );
-void delayWrite( delay_t * delay, tick_t duration );
 
 /* USER CODE END EC */
 
@@ -69,8 +57,27 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define B1_Pin GPIO_PIN_13
+#define B1_GPIO_Port GPIOC
+#define USART_TX_Pin GPIO_PIN_2
+#define USART_TX_GPIO_Port GPIOA
+#define USART_RX_Pin GPIO_PIN_3
+#define USART_RX_GPIO_Port GPIOA
+#define LD2_Pin GPIO_PIN_5
+#define LD2_GPIO_Port GPIOA
+#define TMS_Pin GPIO_PIN_13
+#define TMS_GPIO_Port GPIOA
+#define TCK_Pin GPIO_PIN_14
+#define TCK_GPIO_Port GPIOA
+#define SWO_Pin GPIO_PIN_3
+#define SWO_GPIO_Port GPIOB
 
-/* USER CODE BEGIN Private defines */
+#define MS_TO_TICK 1
+#define _100_MS_TO_TICK (100*MS_TO_TICK)
+#define _500_MS_TO_TICK (500*MS_TO_TICK)
+#define _1000_MS_TO_TICK (1000*MS_TO_TICK)
+
+
 
 /* USER CODE END Private defines */
 
