@@ -55,6 +55,7 @@ int main(void)
 
   memset(&myDelay, 0 ,sizeof(myDelay));
 
+  // Se puede cambiar la secuencia por codigo
   const tick_t TIEMPOS[] = {_500_MS_TO_TICK, _100_MS_TO_TICK, _100_MS_TO_TICK, _1000_MS_TO_TICK};
 
   delayInit(&myDelay, TIEMPOS[0]);
@@ -63,6 +64,7 @@ int main(void)
   {
 	  for(myPeriodController=0;myPeriodController<(sizeof(TIEMPOS)/sizeof(TIEMPOS[0]));myPeriodController++)
 	  {
+		// Tal como pide el punto 3, se escribe el tiempo del delay checkeando previamente que no este activo
 		if(!delayIsRunning(&myDelay)){
 			delayWrite(&myDelay,TIEMPOS[myPeriodController]);
 		}

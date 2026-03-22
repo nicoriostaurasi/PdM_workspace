@@ -65,6 +65,11 @@ void delayWrite( delay_t * delay, tick_t duration){
   delay->duration = duration;
 }
 
+/**
+  * @brief  Check if the delay is active
+  * @param  delay: Pointer to the delay structure
+  * @retval bool_t: true if the delay is running, false otherwise
+  */
 bool_t delayIsRunning( delay_t* delay ){
 	  // Si el delay es NULL, no puedo hacer nada, devuelvo false
 	  if(delay == NULL) {
