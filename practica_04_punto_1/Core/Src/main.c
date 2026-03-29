@@ -25,25 +25,35 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 
+/** @brief Debouncer FSM estado*/
 static debounceState_t _debounceFsmState = BUTTON_UP;
+/** @brief Delay para el debounce */
 static delay_t myDelay;
 UART_HandleTypeDef huart2;
 
+/** @brief Inicializa la máquina de estados del debounce */
 void debounceFSM_init(){
 	_debounceFsmState = BUTTON_UP;
 }
 
+/** @brief Actualiza la máquina de estados del debounce */
 void debounceFSM_update(){
-	if(!delayRead(&myDelay)){
+
+  static uint8_t fallingStateCounter = 0;
+	static uint8_t risingStateCounter = 0;
+
+  // Verifico que el tiempo de muestreo del debounce haya transcurrido
+  if(!delayRead(&myDelay)){
 		  return;
 	}
 
-	static uint8_t fallingStateCounter = 0;
-	static uint8_t risingStateCounter = 0;
-	switch(_debounceFsmState){
+  // Switch de la máquina de estados del debounce
+  switch(_debounceFsmState){
 	case BUTTON_UP: {
-		buttonReleased();
+    // En este estado el boton esta liberado, por lo que se ejecuta su acción
+    buttonReleased();
 
+    // Si el boton esta presionado, se pasa al estado de BUTTON_FALLING
 		if(checkButtonStatusPressedRaw()) {
 			_debounceFsmState = BUTTON_FALLING;
 			fallingStateCounter=0;
@@ -52,8 +62,10 @@ void debounceFSM_update(){
 	}
 
 	case BUTTON_FALLING: {
-		buttonReleased();
+    // En este estado el boton esta en transición por lo que se ejecuta su acción anterior
+    buttonReleased();
 
+    // Si el boton sigue presionado, se incrementa el contador de estados de caída, sino se vuelve al estado de BUTTON_UP
 		if(checkButtonStatusPressedRaw()){
 			fallingStateCounter++;
 		}
@@ -62,6 +74,7 @@ void debounceFSM_update(){
 			_debounceFsmState = BUTTON_UP;
 		}
 
+    // Si el contador de estados de caída supera el máximo, se pasa al estado de BUTTON_DOWN
 		if(fallingStateCounter>=DEBOUNCE_COUNTER_MAX){
 			fallingStateCounter=0;
 			_debounceFsmState = BUTTON_DOWN;
@@ -71,9 +84,10 @@ void debounceFSM_update(){
 	}
 
 	case BUTTON_DOWN: {
-
+    // En este estado el boton esta presionado, por lo que se ejecuta su acción
 		buttonPressed();
 
+    // Si el boton esta liberado, se pasa al estado de BUTTON_RAISING
 		if(!checkButtonStatusPressedRaw()) {
 			_debounceFsmState = BUTTON_RAISING;
 			risingStateCounter = 0;
@@ -82,8 +96,10 @@ void debounceFSM_update(){
 	}
 
 	case BUTTON_RAISING: {
-		buttonPressed();
+    // En este estado el boton esta en transición por lo que se ejecuta su acción anterior
+    buttonPressed();
 
+    // Si el boton sigue liberado, se incrementa el contador de estados de subida, sino se vuelve al estado de BUTTON_DOWN
 		if(!checkButtonStatusPressedRaw()){
 			risingStateCounter++;
 		}
@@ -92,6 +108,7 @@ void debounceFSM_update(){
 			_debounceFsmState = BUTTON_DOWN;
 		}
 
+    // Si el contador de estados de subida supera el máximo, se pasa al estado de BUTTON_UP
 		if(risingStateCounter>=DEBOUNCE_COUNTER_MAX){
 			risingStateCounter=0;
 			_debounceFsmState = BUTTON_UP;
@@ -100,6 +117,7 @@ void debounceFSM_update(){
 	}
 
 	default: {
+    // En caso de que el estado sea inválido, se vuelve al estado de BUTTON_UP
 		buttonReleased();
 		_debounceFsmState = BUTTON_UP;
 		break;
@@ -108,22 +126,27 @@ void debounceFSM_update(){
 	}
 }
 
+/** @brief Función que se ejecuta cuando se presiona el botón  */
 void buttonPressed(){
 	boardLedOn();
 }
 
+/** @brief Función que se ejecuta cuando se libera el botón */
 void buttonReleased(){
 	boardLedOff();
 }
 
+/** @brief Función que verifica el estado del botón sin debounce */
 bool checkButtonStatusPressedRaw(){
 	return (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) != GPIO_PIN_SET);
 }
 
+/** @brief Función que enciende el led de la placa */
 void boardLedOn(void){
 	HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
 }
 
+/** @brief Función que apaga el led de la placa */
 void boardLedOff(void){
 	HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 }
@@ -148,11 +171,13 @@ int main(void)
 
   memset(&myDelay, 0 ,sizeof(myDelay));
 
+  // Inicializo el delay para el debounce y la máquina de estados del debounce
   delayInit(&myDelay, DEBOUNCER_SAMPLE_RATE);
   debounceFSM_init();
   while(1)
   {
-	  debounceFSM_update();
+    // Actualizo la máquina de estados del debounce
+    debounceFSM_update();
   }
 }
 

@@ -80,6 +80,7 @@ void Error_Handler(void);
 #define DEBOUNCER_TIME (40*MS_TO_TICK)
 #define DEBOUNCE_COUNTER_MAX (DEBOUNCER_TIME/DEBOUNCER_SAMPLE_RATE)
 
+/** @brief Estados de la máquina de estados del debounce */
 typedef enum{
 BUTTON_UP,
 BUTTON_FALLING,
@@ -87,13 +88,39 @@ BUTTON_DOWN,
 BUTTON_RAISING,
 } debounceState_t;
 
+/** @brief Inicializa la máquina de estados del debounce
+  * @retval none
+  */
+void debounceFSM_init(void);
 
-void debounceFSM_init();
-void debounceFSM_update();
-void buttonPressed();
-void buttonReleased();
+/** @brief Actualiza la máquina de estados del debounce
+  * @retval none
+  */
+void debounceFSM_update(void);
+
+/** @brief Función que se ejecuta cuando se presiona el botón
+  * @retval none
+  */
+void buttonPressed(void);
+
+/** @brief Función que se ejecuta cuando se libera el botón
+  * @retval none
+  */
+void buttonReleased(void);
+
+/** @brief Función que enciende el led de la placa 
+  * @retval none
+  */
 void boardLedOn(void);
+
+/** @brief Función que apaga el led de la placa 
+  * @retval none
+  */
 void boardLedOff(void);
+
+/** @brief Función que verifica el estado del botón sin debounce
+  * @retval true si el botón está presionado, false si no lo está
+  */
 bool checkButtonStatusPressedRaw(void);
 
 
