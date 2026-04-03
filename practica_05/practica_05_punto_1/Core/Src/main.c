@@ -37,6 +37,8 @@ typedef enum{period100mS, period500mS} delayTime_t;
   */
 int main(void)
 {
+  uint8_t pbuff[2];
+
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
@@ -46,11 +48,12 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
 
-  uint8_t pbuff[2];
+  /* Inicio la Uart */  
   uartInit();
   while(1)
   {
-	  uartReceiveStringSize(pbuff,1);
+    /* Implemento un Loopback de UART */
+    uartReceiveStringSize(pbuff,1);
 	  uartSendStringSize(pbuff,1);
   }
 
