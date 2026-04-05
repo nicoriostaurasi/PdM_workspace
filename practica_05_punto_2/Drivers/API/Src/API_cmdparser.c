@@ -16,8 +16,10 @@
 #define LD2_Pin GPIO_PIN_5
 #define LD2_GPIO_Port GPIOA
 
+/** @brief Tipo de función para manejar comandos */
 typedef void (*command_handler_t)(uint8_t argc, char *argv[]);
 
+/** @brief Tipos de estado para la máquina de estados del parser de comandos */
 typedef enum {
 	CMD_IDLE = 0,
 	CMD_RECEIVING,
@@ -26,23 +28,35 @@ typedef enum {
 	CMD_ERROR,
 } cmdParserState_t;
 
+/** @brief Estructura para definir un comando */
 typedef struct{
     const char *name;
 	uint8_t expectedArgs;
 	command_handler_t handler;
 } command2_t;
 
+/** @brief Buffer para recibir datos por UART */
 static uint8_t uartRxBuffer[CMD_MAX_LINE];
+
+/** @brief Máquina de estados del parser de comandos */
 static cmdParserState_t cmdParserStateFsm = CMD_IDLE;
+
+/** @brief Variables para almacenar los argumentos actuales y el handler del comando a ejecutar */
 static char* currentArgv[CMD_MAX_TOKENS];
+
+/** @brief Variable para almacenar el número de argumentos actuales */
 static uint8_t currentArgc = 0;
+
+/** @brief Variable para almacenar el handler del comando a ejecutar */
 static command_handler_t currentCmdHandler;
 
+/** @brief Acción para el comando HELP */
 static void helpAction(uint8_t argc, char *argv[])
 {
 	cmdPrintHelp();
 }
 
+/** @brief Acción para el comando LED */
 static void ledAction(uint8_t argc, char *argv[])
 {
     if (strcmp(argv[1], "ON") == 0) {
@@ -59,6 +73,7 @@ static void ledAction(uint8_t argc, char *argv[])
     }
 }
 
+/**** Accion para el comando STATUS ****/
 static void statusAction(uint8_t argc, char *argv[]) {
 	GPIO_PinState ret=HAL_GPIO_ReadPin(LD2_GPIO_Port,LD2_Pin);
 	if(ret == GPIO_PIN_SET) {
@@ -68,6 +83,7 @@ static void statusAction(uint8_t argc, char *argv[]) {
 	}
 }
 
+/** @brief Acción para el comando BAUD? */
 static void baudGetAction(uint8_t argc, char *argv[]) {
 	uint32_t currentBaudrate = getCurrentBaudrate();
 	char buffBaud[8];
@@ -78,6 +94,7 @@ static void baudGetAction(uint8_t argc, char *argv[]) {
 	uartSendString((uint8_t*)"\r\n");
 }
 
+/** @brief Acción para el comando BAUD= */
 static void baudSetAction(uint8_t argc, char *argv[]) {
 	uint32_t newBaudrate = atoi(argv[1]);
 
@@ -92,6 +109,11 @@ static void baudSetAction(uint8_t argc, char *argv[]) {
 
 }
 
+/** @brief Función para tokenizar la línea de comando recibida
+ *  @param input: La línea de comando a tokenizar
+ *  @param argv: El array donde se almacenarán los tokens
+ *  @return: El número de tokens encontrados, o -1 si hubo un error de overflow
+ */
 static int8_t tokenize(char *input, char *argv[])
 {
     uint8_t argc = 0;
@@ -108,6 +130,9 @@ static int8_t tokenize(char *input, char *argv[])
     return argc;
 }
 
+/** @brief Función para ejecutar la acción correspondiente a un error de comando
+ *  @param errorAction: El tipo de error ocurrido
+ */
 static void cmdExecutError(cmd_status_t errorAction){
 	switch(errorAction){
 		case CMD_ERR_OVERFLOW: {
@@ -133,6 +158,7 @@ static void cmdExecutError(cmd_status_t errorAction){
 	}
 }
 
+/** @brief Tabla de comandos disponibles */
 const command2_t commandTable2[] = {
 	{"HELP",1, helpAction},
 	{"LED",2, ledAction},
@@ -141,6 +167,9 @@ const command2_t commandTable2[] = {
 	{"BAUD=",2, baudSetAction},
 };
 
+/** @brief Función para procesar la línea de comando recibida y ejecutar la acción correspondiente
+ *  @return: El estado del procesamiento del comando
+ */
 static cmd_status_t cmdProcessLine(void)
 {
 	char* argv[CMD_MAX_TOKENS];

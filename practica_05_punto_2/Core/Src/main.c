@@ -33,7 +33,7 @@ static void MX_GPIO_Init(void);
   */
 int main(void)
 {
-  uint8_t pbuff[2];
+//  uint8_t pbuff[2];
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
