@@ -11,10 +11,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef uint32_t tick_t; // Qué biblioteca se debe incluir para que esto compile?
-//stdint.h
-typedef bool bool_t;	  // Qué biblioteca se debe incluir para que esto compile?
-//stdbool.h
+typedef uint32_t tick_t;
+typedef bool bool_t;
 
 /**
  * @brief Delay structure

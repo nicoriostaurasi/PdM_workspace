@@ -7,6 +7,18 @@
 
 #include "API_digital_angle_meter.h"
 #include <stdbool.h>
+#include "API_debounce.h"
+#include "API_delay.h"
+#include "API_i2c.h"
+#include "API_uart.h"
+#include "API_gpios.h"
+#include "API_adxl345.h"
+#include "API_ssd1306.h"
+
+#define FSM_TICK_DELAY 1
+#define HEARTBEAT_RATE 10
+#define SENSOR_SAMPLE_RATE 10
+
 
 typedef enum {
 	INIT = 0,
@@ -16,7 +28,7 @@ typedef enum {
 	READ_SENSOR,
 	PROCESS_DATA,
 	UPDATE_DISPLAY,
-	ERROR,
+	ERROR_STATE,
 } digitalAngleMeterState_t;
 
 typedef enum {
@@ -37,15 +49,24 @@ typedef struct {
 
 static digitalAngleMeterState_t digitalAngleMeterFsmState = INIT;
 static displayMode_t displayMode = DIGITAL;
+static delay_t fsmDelay;
+static delay_t heartBeatLedTimer;
+static delay_t sampleRateTimer;
 
 //llama al modulo de uart, y pregunta si hubo un comando valido
-static bool checkUartCmd(){}
+static bool checkUartCmd(){
+	return false;
+}
 
 //llama al modulo de timer por sw y checkea el timer del sensor
-static bool checkSensorSamplingTimer(){}
+static bool checkSensorSamplingTimer(){
+	return delayRead(&sampleRateTimer);
+}
 
 //llama al modulo de gpios y pregunta si la tecla fue pulsada
-static bool checkButtonPressed(){}
+static bool checkButtonPressed(){
+	return readKey();
+}
 
 // llama al mudulo del sensor y le pide los datos raw
 static bool getCurrentAccelerationFromSensor(aceleration_t* pacel){}
@@ -62,10 +83,44 @@ static bool updateAnalogScreen(angle_t angle){}
 // deberian ser de un modulo screen
 static bool updateDigitalScreen(angle_t angle){}
 
+// deberian ser de un modulo board led
+static void toggleBoardLed(){}
+
+static void checkHeartBeatTimer(void) {
+	if(delayRead(&heartBeatLedTimer)){
+		toggleBoardLed();
+	}
+}
 
 static bool digital_angle_meter_init() {
 	// inicializa los modulos perifericos necesarios para que funcione la FSM
 	displayMode = DIGITAL;
+
+	if(!init_i2c_1()){
+		return false;
+	}
+
+	if(!uartInit()){
+		return false;
+	}
+
+	board_gpios_init();
+
+	delayWrite(&fsmDelay,FSM_TICK_DELAY);
+	delayWrite(&heartBeatLedTimer,HEARTBEAT_RATE);
+	delayWrite(&sampleRateTimer,SENSOR_SAMPLE_RATE);
+
+	if(!adxl345_init()){
+		return false;
+	}
+
+	if(!ssd1306_init()){
+		return false;
+	}
+
+	SSD1306_Puts("NGRT", &Font_11x18, 1);
+	ssd1306_UpdateScreen();
+
 	return true;
 }
 
@@ -77,88 +132,89 @@ void Digital_Angle_Meter_FSM_Update() {
 	angle_t ang;
 	aceleration_t acel;
 	bool ret;
-	// maneja el delay
-	//IF DELAY VENCIDO {}
 
-	// maneja las transiciones de estados
-	switch(digitalAngleMeterFsmState) {
-		case INIT: {
-			if(digital_angle_meter_init()){
-				digitalAngleMeterFsmState = ERROR;
-			} else {
-				digitalAngleMeterFsmState = IDLE;
-			}
-			break;
-		}
-
-		case IDLE: {
-			if(checkSensorSamplingTimer()) {
-				digitalAngleMeterFsmState = READ_SENSOR;
-			} else if(checkUartCmd()) {
-				digitalAngleMeterFsmState = HANDLE_UART;
-			} else if(checkButtonPressed()) {
-				digitalAngleMeterFsmState = HANDLE_BUTTON;
-			}
-			break;
-		}
-
-		case HANDLE_UART: {
-			//To be Develop
-			break;
-		}
-
-		case HANDLE_BUTTON: {
-			if(displayMode == DIGITAL) {
-				displayMode = ANALOGIC;
-			} else {
-				displayMode = DIGITAL;
-			}
-			digitalAngleMeterFsmState = UPDATE_DISPLAY;
-			break;
-		}
-
-		case READ_SENSOR: {
-			// Sampleo cada 10mS
-			if(getCurrentAccelerationFromSensor(&acel)){
-				digitalAngleMeterFsmState = PROCESS_DATA;
-			} else {
-				digitalAngleMeterFsmState = ERROR;
-			}
-			break;
-		}
-
-		case PROCESS_DATA: {
-			ang = convertAccelerationToAngle(&acel);
-			digitalAngleMeterFsmState = UPDATE_DISPLAY;
-			break;
-		}
-
-		case UPDATE_DISPLAY: {
-			if(displayMode == DIGITAL) {
-				ret = updateDigitalScreen(ang);
-			} else {
-				ret = updateAnalogScreen(ang);
+	if(delayRead(&sampleRateTimer)){
+		// maneja las transiciones de estados
+		switch(digitalAngleMeterFsmState) {
+			case INIT: {
+				if(digital_angle_meter_init()){
+					digitalAngleMeterFsmState = ERROR_STATE;
+				} else {
+					digitalAngleMeterFsmState = IDLE;
+				}
+				break;
 			}
 
-			if(ret) {
-				digitalAngleMeterFsmState = IDLE;
-			} else {
-				digitalAngleMeterFsmState = ERROR;
+			case IDLE: {
+				if(checkSensorSamplingTimer()) {
+					digitalAngleMeterFsmState = READ_SENSOR;
+				} else if(checkUartCmd()) {
+					digitalAngleMeterFsmState = HANDLE_UART;
+				} else if(checkButtonPressed()) {
+					digitalAngleMeterFsmState = HANDLE_BUTTON;
+				}
+				checkHeartBeatTimer();
+				break;
 			}
 
-			break;
-		}
+			case HANDLE_UART: {
+				//To be Develop
+				break;
+			}
 
-		case ERROR: {
-			//CHANGE LED BLINK FREQ
-			//CHECK PERIPHERAL INTEGRITY
-			//FEEDBACK BY UART
-			break;
-		}
+			case HANDLE_BUTTON: {
+				if(displayMode == DIGITAL) {
+					displayMode = ANALOGIC;
+				} else {
+					displayMode = DIGITAL;
+				}
+				digitalAngleMeterFsmState = UPDATE_DISPLAY;
+				break;
+			}
 
-		default: {
-			digitalAngleMeterFsmState = INIT;
-			break;
+			case READ_SENSOR: {
+				// Sampleo cada 10mS
+				if(getCurrentAccelerationFromSensor(&acel)){
+					digitalAngleMeterFsmState = PROCESS_DATA;
+				} else {
+					digitalAngleMeterFsmState = ERROR_STATE;
+				}
+				break;
+			}
+
+			case PROCESS_DATA: {
+				ang = convertAccelerationToAngle(&acel);
+				digitalAngleMeterFsmState = UPDATE_DISPLAY;
+				break;
+			}
+
+			case UPDATE_DISPLAY: {
+				if(displayMode == DIGITAL) {
+					ret = updateDigitalScreen(ang);
+				} else {
+					ret = updateAnalogScreen(ang);
+				}
+
+				if(ret) {
+					digitalAngleMeterFsmState = IDLE;
+				} else {
+					digitalAngleMeterFsmState = ERROR_STATE;
+				}
+
+				break;
+			}
+
+			case ERROR_STATE: {
+				//CHANGE LED BLINK FREQ
+				//CHECK PERIPHERAL INTEGRITY
+				//FEEDBACK BY UART
+				break;
+			}
+
+			default: {
+				digitalAngleMeterFsmState = INIT;
+				break;
+			}
 		}
 	}
 }
