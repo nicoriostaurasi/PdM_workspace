@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "API_digital_angle_meter.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -94,7 +95,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-
+  Digital_Angle_Meter_FSM_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -102,8 +103,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  HAL_Delay(1);
-    /* USER CODE BEGIN 3 */
+	Digital_Angle_Meter_FSM_Update();
+
+	/* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
