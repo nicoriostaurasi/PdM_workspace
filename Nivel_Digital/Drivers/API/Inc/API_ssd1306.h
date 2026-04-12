@@ -17,12 +17,14 @@ bool ssd1306_init(void);
 bool ssd1306_sendCommand(uint8_t command);
 bool ssd1306_writeReg(uint8_t reg, uint8_t value);
 bool ssd1306_init(void);
-void ssd1306_Fill(uint8_t value);
-bool ssd1306_UpdateScreen(void);
-void SSD1306_GotoXY(uint16_t x, uint16_t y);
-char SSD1306_Puts(char* str, FontDef_t* Font, uint8_t color);
-char SSD1306_Putc(char ch, FontDef_t* Font, uint8_t color);
-void SSD1306_DrawPixel(uint16_t x, uint16_t y, uint8_t color);
+void ssd1306_fill(uint8_t value);
+bool ssd1306_updateScreen(void);
+void ssd1306_gotoXY(uint16_t x, uint16_t y);
+char ssd1306_puts(char* str, FontDef_t* Font, uint8_t color);
+char ssd1306_putc(char ch, FontDef_t* Font, uint8_t color);
+void ssd1306_drawPixel(uint16_t x, uint16_t y, uint8_t color);
 
+#define COLOR_ON 0x01
+#define COLOR_OFF 0x00
 
 #endif /* API_INC_API_SSD1306_H_ */

@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "API_digital_angle_meter.h"
+#include "API_debounce.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -89,6 +90,8 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
   Digital_Angle_Meter_FSM_Init();
+  debounceFSM_init();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -96,6 +99,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	debounceFSM_update();
 	Digital_Angle_Meter_FSM_Update();
 
 	/* USER CODE BEGIN 3 */

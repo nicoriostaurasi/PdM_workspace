@@ -9,6 +9,7 @@
 #define API_INC_API_GPIOS_H_
 
 void board_gpios_init(void);
+void board_toggle_led(void);
 
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC

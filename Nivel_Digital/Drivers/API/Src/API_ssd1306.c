@@ -35,8 +35,6 @@ static SSD1306_t SSD1306;
 #define SSD1306_ACTIVATE_SCROLL                      0x2F
 #define SSD1306_SET_VERTICAL_SCROLL_AREA             0xA3
 
-#define COLOR_ON 0x01
-#define COLOR_OFF 0x00
 
 
 bool ssd1306_sendCommand(uint8_t command){
@@ -94,9 +92,9 @@ bool ssd1306_init(void){
 
     ssd1306_sendCommand(SSD1306_DEACTIVATE_SCROLL);
 
-    ssd1306_Fill(COLOR_OFF);
+    ssd1306_fill(COLOR_OFF);
 
-    ssd1306_UpdateScreen();
+    ssd1306_updateScreen();
 
     SSD1306.currentX = 0;
     SSD1306.currentY = 0;
@@ -106,17 +104,17 @@ bool ssd1306_init(void){
     return true;
 }
 
-void ssd1306_Fill(uint8_t value) {
+void ssd1306_fill(uint8_t value) {
 	/* Set memory */
 	memset(SSD1306_Buffer, value , sizeof(SSD1306_Buffer));
 }
 
-void SSD1306_GotoXY(uint16_t x, uint16_t y) {
+void ssd1306_gotoXY(uint16_t x, uint16_t y) {
 	SSD1306.currentX = x;
 	SSD1306.currentY = y;
 }
 
-void SSD1306_DrawPixel(uint16_t x, uint16_t y, uint8_t color) {
+void ssd1306_drawPixel(uint16_t x, uint16_t y, uint8_t color) {
 	if (
 		x >= SSD1306_WIDTH ||
 		y >= SSD1306_HEIGHT
@@ -133,7 +131,7 @@ void SSD1306_DrawPixel(uint16_t x, uint16_t y, uint8_t color) {
 	}
 }
 
-char SSD1306_Putc(char ch, FontDef_t* Font, uint8_t color) {
+char ssd1306_putc(char ch, FontDef_t* Font, uint8_t color) {
 	uint32_t i, b, j;
 
 	/* Check available space in LCD */
@@ -150,9 +148,9 @@ char SSD1306_Putc(char ch, FontDef_t* Font, uint8_t color) {
 		b = Font->data[(ch - 32) * Font->FontHeight + i];
 		for (j = 0; j < Font->FontWidth; j++) {
 			if ((b << j) & 0x8000) {
-				SSD1306_DrawPixel(SSD1306.currentX + j, (SSD1306.currentY + i), color);
+				ssd1306_drawPixel(SSD1306.currentX + j, (SSD1306.currentY + i), color);
 			} else {
-				SSD1306_DrawPixel(SSD1306.currentX + j, (SSD1306.currentY + i), !color);
+				ssd1306_drawPixel(SSD1306.currentX + j, (SSD1306.currentY + i), !color);
 			}
 		}
 	}
@@ -165,11 +163,11 @@ char SSD1306_Putc(char ch, FontDef_t* Font, uint8_t color) {
 }
 
 
-char SSD1306_Puts(char* str, FontDef_t* Font, uint8_t color) {
+char ssd1306_puts(char* str, FontDef_t* Font, uint8_t color) {
 	/* Write characters */
 	while (*str) {
 		/* Write character by character */
-		if (SSD1306_Putc(*str, Font, color) != *str) {
+		if (ssd1306_putc(*str, Font, color) != *str) {
 			/* Return error */
 			return *str;
 		}
@@ -184,7 +182,7 @@ char SSD1306_Puts(char* str, FontDef_t* Font, uint8_t color) {
 
 
 
-bool ssd1306_UpdateScreen(void) {
+bool ssd1306_updateScreen(void) {
 	uint8_t m;
 	bool ret;
 	for (m = 0; m < 8; m++) {
