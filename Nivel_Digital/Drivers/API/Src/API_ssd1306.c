@@ -21,7 +21,7 @@ typedef struct {
 
 static SSD1306_t SSD1306;
 
-#define SSD1306_I2C_ADDR 1
+#define SSD1306_I2C_ADDR 0x78
 #define SSD1306_I2C_TIMEOUT 1000
 
 #define SSD1306_WRITECOMMAND(command) ssd1306_writeReg(0x00, (command))
@@ -94,7 +94,7 @@ bool ssd1306_init(void){
 
     ssd1306_sendCommand(SSD1306_DEACTIVATE_SCROLL);
 
-    ssd1306_Fill(COLOR_ON);
+    ssd1306_Fill(COLOR_OFF);
 
     ssd1306_UpdateScreen();
 

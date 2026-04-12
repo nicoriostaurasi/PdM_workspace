@@ -118,7 +118,10 @@ static bool digital_angle_meter_init() {
 		return false;
 	}
 
-	SSD1306_Puts("NGRT", &Font_11x18, 1);
+	SSD1306_Puts(" NGRT CESE", &Font_11x18, 1);
+	SSD1306_GotoXY(0,20);
+	SSD1306_Puts("   FIUBA", &Font_11x18, 1);
+
 	ssd1306_UpdateScreen();
 
 	return true;
@@ -137,7 +140,7 @@ void Digital_Angle_Meter_FSM_Update() {
 		// maneja las transiciones de estados
 		switch(digitalAngleMeterFsmState) {
 			case INIT: {
-				if(digital_angle_meter_init()){
+				if(!digital_angle_meter_init()){
 					digitalAngleMeterFsmState = ERROR_STATE;
 				} else {
 					digitalAngleMeterFsmState = IDLE;
