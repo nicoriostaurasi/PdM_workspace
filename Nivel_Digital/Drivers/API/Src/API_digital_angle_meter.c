@@ -79,23 +79,37 @@ static float rad_to_deg(float rad){
 
 // convierte los datos
 static angles_t convertAccelerationToAngle(ADXL345_AccelG_t* pAccel){
-	angles_t currentAngle;
-	currentAngle.pitch = -1.0;
-	currentAngle.roll = -1.0;
+	static angles_t currentAngleBuffer[3] = {0};
+	angles_t averageAngle;
+	float averagePitch = 0.0;
+	float averageRoll = 0.0;
 
 	if(pAccel==NULL){
-		return currentAngle;
+		return currentAngleBuffer[0];
 	}
 
-	currentAngle.pitch = rad_to_deg(
+	currentAngleBuffer[0].pitch = rad_to_deg(
         atan2f(pAccel->x, sqrtf((pAccel->y * pAccel->y) + (pAccel->z * pAccel->z)))
     );
 
-	currentAngle.roll = rad_to_deg(
+	currentAngleBuffer[0].roll = rad_to_deg(
         atan2f(pAccel->y, sqrtf((pAccel->x * pAccel->x) + (pAccel->z * pAccel->z)))
     );
 
-	return currentAngle;
+	for(uint8_t i=0;i<3;i++){
+		averagePitch+=currentAngleBuffer[i].pitch;
+		averageRoll+=currentAngleBuffer[i].roll;
+	}
+
+	for(uint8_t i=0;i<2;i++){
+		memcpy(&currentAngleBuffer[i+1],&currentAngleBuffer[i],sizeof(angles_t));
+	}
+
+
+	averageAngle.pitch = averagePitch/3.0;
+    averageAngle.roll = averageRoll/3.0;
+
+	return averageAngle;
 }
 
 // deberian ser de un modulo screen
@@ -166,11 +180,11 @@ static void displayPitchRollDigital(float pitch, float roll)
     ssd1306_gotoXY(72, 0);
     ssd1306_puts("ROLL", &Font_7x10, 1);
 
-    ssd1306_gotoXY(0, 18);
-    ssd1306_puts(spitch, &Font_11x18, 1);
+    ssd1306_gotoXY(10, 18);
+    ssd1306_puts(spitch, &Font_7x10, 1);
 
     ssd1306_gotoXY(64, 18);
-    ssd1306_puts(sroll, &Font_11x18, 1);
+    ssd1306_puts(sroll, &Font_7x10, 1);
 
 }
 
