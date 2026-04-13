@@ -15,6 +15,10 @@
 #include "API_adxl345.h"
 #include "API_ssd1306.h"
 #include <math.h>
+#include "API_screen.h"
+#include "API_accelerometer.h"
+#include "API_screen.h"
+#include "API_graphic.h"
 
 #define FSM_TICK_DELAY 1
 #define HEARTBEAT_RATE 50
@@ -33,12 +37,6 @@ typedef enum {
 	UPDATE_DISPLAY,
 	ERROR_STATE,
 } digitalAngleMeterState_t;
-
-typedef struct
-{
-    float pitch;
-    float roll;
-} angles_t;
 
 typedef enum {
 	DIGITAL = 0,
@@ -69,7 +67,7 @@ static bool checkButtonPressed(){
 
 // llama al mudulo del sensor y le pide los datos raw
 static bool getCurrentAccelerationFromSensor(ADXL345_AccelG_t* pAccel){
-	return adxl345_readGAccel(pAccel);
+	return accelerometer_readAccelerationG(pAccel);
 }
 
 static float rad_to_deg(float rad){
@@ -112,12 +110,18 @@ static angles_t convertAccelerationToAngle(ADXL345_AccelG_t* pAccel){
 	return averageAngle;
 }
 
+int16_t screen_abs(int16_t x) {
+    return (x < 0) ? -x : x;
+}
+
+
+
+
+
 // deberian ser de un modulo screen
 static bool updateAnalogScreen(angles_t angle){
 	ssd1306_fill(COLOR_OFF);
-	ssd1306_gotoXY(0,0);
-	ssd1306_puts(" TBD", &Font_11x18, 1);
-	return ssd1306_updateScreen();
+	screen_drawDigitalInclinometer(angle);
 }
 
 static void floatToString2Dec(float value, char *out)
@@ -192,7 +196,7 @@ static void displayPitchRollDigital(float pitch, float roll)
 static bool updateDigitalScreen(angles_t angle){
     ssd1306_fill(COLOR_ON);
 	displayPitchRollDigital(angle.pitch,angle.roll);
-	return ssd1306_updateScreen();
+	return graphic_update();
 }
 
 static void checkHeartBeatTimer(void) {
@@ -219,11 +223,11 @@ static bool digital_angle_meter_init() {
 	delayWrite(&heartBeatLedTimer,HEARTBEAT_RATE);
 	delayWrite(&sampleRateTimer,SENSOR_SAMPLE_RATE);
 
-	if(!adxl345_init()){
+	if(!accelerometer_initSensor()){
 		return false;
 	}
 
-	if(!ssd1306_init()){
+	if(!screen_start()){
 		return false;
 	}
 
@@ -231,10 +235,10 @@ static bool digital_angle_meter_init() {
 	ssd1306_gotoXY(0,20);
 	ssd1306_puts("   FIUBA", &Font_11x18, 1);
 
+	if(!graphic_update()){
+		return false;
+	}
 
-	ssd1306_updateScreen();
-
-	// Para mostrar la pantalla de inicio
 	HAL_Delay(1000);
 
 	return true;

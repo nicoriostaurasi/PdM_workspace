@@ -8,6 +8,12 @@
 #ifndef API_INC_API_DIGITAL_ANGLE_METER_H_
 #define API_INC_API_DIGITAL_ANGLE_METER_H_
 
+typedef struct
+{
+    float pitch;
+    float roll;
+} angles_t;
+
 
 void Digital_Angle_Meter_FSM_Init(void);
 void Digital_Angle_Meter_FSM_Update(void);
