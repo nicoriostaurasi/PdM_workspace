@@ -60,7 +60,7 @@ static void angle_to_string(float value, char *buf) {
 }
 
 
- void screen_drawDigitalInclinometer(angles_t angle) {
+ bool screen_drawDigitalInclinometer(angles_t angle) {
     char rollStr[8];
     char pitchStr[8];
 
@@ -130,7 +130,86 @@ static void angle_to_string(float value, char *buf) {
     ssd1306_gotoXY(84, 48);
     ssd1306_puts(pitchStr, &Font_7x10, COLOR_ON);
 
-    graphic_update();
-
-    return;
+    return graphic_update();
 }
+
+ static void floatToString2Dec(float value, char *out)
+ {
+     int32_t int_part;
+     int32_t dec_part;
+     int idx = 0;
+
+     if (value < 0.0f)
+     {
+         out[idx++] = '-';
+         value = -value;
+     }
+
+     int_part = (int32_t)value;
+     dec_part = (int32_t)((value - (float)int_part) * 100.0f + 0.5f);
+
+     if (dec_part >= 100)
+     {
+         int_part += 1;
+         dec_part = 0;
+     }
+
+     /* convertir parte entera */
+     if (int_part >= 100)
+     {
+         out[idx++] = (char)('0' + (int_part / 100) % 10);
+         out[idx++] = (char)('0' + (int_part / 10) % 10);
+         out[idx++] = (char)('0' + (int_part % 10));
+     }
+     else if (int_part >= 10)
+     {
+         out[idx++] = (char)('0' + (int_part / 10) % 10);
+         out[idx++] = (char)('0' + (int_part % 10));
+     }
+     else
+     {
+         out[idx++] = (char)('0' + int_part);
+     }
+
+     out[idx++] = '.';
+     out[idx++] = (char)('0' + (dec_part / 10) % 10);
+     out[idx++] = (char)('0' + (dec_part % 10));
+     out[idx] = '\0';
+ }
+
+
+static void displayPitchRollDigital(float pitch, float roll)
+{
+     char spitch[12];
+     char sroll[12];
+
+     floatToString2Dec(pitch, spitch);
+     floatToString2Dec(roll, sroll);
+
+     ssd1306_fill(COLOR_OFF);
+
+     ssd1306_gotoXY(8, 0);
+     ssd1306_puts("PITCH", &Font_7x10, 1);
+
+     ssd1306_gotoXY(72, 0);
+     ssd1306_puts("ROLL", &Font_7x10, 1);
+
+     ssd1306_gotoXY(10, 18);
+     ssd1306_puts(spitch, &Font_7x10, 1);
+
+     ssd1306_gotoXY(64, 18);
+     ssd1306_puts(sroll, &Font_7x10, 1);
+
+ }
+
+bool updateAnalogScreen(angles_t angle){
+	ssd1306_fill(COLOR_OFF);
+	screen_drawDigitalInclinometer(angle);
+}
+
+bool updateDigitalScreen(angles_t angle){
+    ssd1306_fill(COLOR_ON);
+ 	displayPitchRollDigital(angle.pitch,angle.roll);
+ 	return graphic_update();
+ }
+

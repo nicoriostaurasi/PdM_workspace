@@ -8,6 +8,8 @@
 #ifndef API_INC_API_ACCELEROMETER_H_
 #define API_INC_API_ACCELEROMETER_H_
 
+#include <stdbool.h>
+
 typedef struct
 {
     float x;

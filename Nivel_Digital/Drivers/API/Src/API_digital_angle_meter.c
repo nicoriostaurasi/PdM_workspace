@@ -18,14 +18,12 @@
 #include "API_screen.h"
 #include "API_accelerometer.h"
 #include "API_screen.h"
+#include "API_angle.h"
 #include "API_graphic.h"
 
 #define FSM_TICK_DELAY 1
 #define HEARTBEAT_RATE 50
 #define SENSOR_SAMPLE_RATE 10
-#define PI 3.14159265358979323846f
-
-
 
 typedef enum {
 	INIT = 0,
@@ -68,135 +66,6 @@ static bool checkButtonPressed(){
 // llama al mudulo del sensor y le pide los datos raw
 static bool getCurrentAccelerationFromSensor(ADXL345_AccelG_t* pAccel){
 	return accelerometer_readAccelerationG(pAccel);
-}
-
-static float rad_to_deg(float rad){
-    return rad * (180.0f / PI);
-}
-
-
-// convierte los datos
-static angles_t convertAccelerationToAngle(ADXL345_AccelG_t* pAccel){
-	static angles_t currentAngleBuffer[3] = {0};
-	angles_t averageAngle;
-	float averagePitch = 0.0;
-	float averageRoll = 0.0;
-
-	if(pAccel==NULL){
-		return currentAngleBuffer[0];
-	}
-
-	currentAngleBuffer[0].pitch = rad_to_deg(
-        atan2f(pAccel->x, sqrtf((pAccel->y * pAccel->y) + (pAccel->z * pAccel->z)))
-    );
-
-	currentAngleBuffer[0].roll = rad_to_deg(
-        atan2f(pAccel->y, sqrtf((pAccel->x * pAccel->x) + (pAccel->z * pAccel->z)))
-    );
-
-	for(uint8_t i=0;i<3;i++){
-		averagePitch+=currentAngleBuffer[i].pitch;
-		averageRoll+=currentAngleBuffer[i].roll;
-	}
-
-	for(uint8_t i=0;i<2;i++){
-		memcpy(&currentAngleBuffer[i+1],&currentAngleBuffer[i],sizeof(angles_t));
-	}
-
-
-	averageAngle.pitch = averagePitch/3.0;
-    averageAngle.roll = averageRoll/3.0;
-
-	return averageAngle;
-}
-
-int16_t screen_abs(int16_t x) {
-    return (x < 0) ? -x : x;
-}
-
-
-
-
-
-// deberian ser de un modulo screen
-static bool updateAnalogScreen(angles_t angle){
-	ssd1306_fill(COLOR_OFF);
-	screen_drawDigitalInclinometer(angle);
-}
-
-static void floatToString2Dec(float value, char *out)
-{
-    int32_t int_part;
-    int32_t dec_part;
-    int idx = 0;
-
-    if (value < 0.0f)
-    {
-        out[idx++] = '-';
-        value = -value;
-    }
-
-    int_part = (int32_t)value;
-    dec_part = (int32_t)((value - (float)int_part) * 100.0f + 0.5f);
-
-    if (dec_part >= 100)
-    {
-        int_part += 1;
-        dec_part = 0;
-    }
-
-    /* convertir parte entera */
-    if (int_part >= 100)
-    {
-        out[idx++] = (char)('0' + (int_part / 100) % 10);
-        out[idx++] = (char)('0' + (int_part / 10) % 10);
-        out[idx++] = (char)('0' + (int_part % 10));
-    }
-    else if (int_part >= 10)
-    {
-        out[idx++] = (char)('0' + (int_part / 10) % 10);
-        out[idx++] = (char)('0' + (int_part % 10));
-    }
-    else
-    {
-        out[idx++] = (char)('0' + int_part);
-    }
-
-    out[idx++] = '.';
-    out[idx++] = (char)('0' + (dec_part / 10) % 10);
-    out[idx++] = (char)('0' + (dec_part % 10));
-    out[idx] = '\0';
-}
-
-static void displayPitchRollDigital(float pitch, float roll)
-{
-    char spitch[12];
-    char sroll[12];
-
-    floatToString2Dec(pitch, spitch);
-    floatToString2Dec(roll, sroll);
-
-    ssd1306_fill(COLOR_OFF);
-
-    ssd1306_gotoXY(8, 0);
-    ssd1306_puts("PITCH", &Font_7x10, 1);
-
-    ssd1306_gotoXY(72, 0);
-    ssd1306_puts("ROLL", &Font_7x10, 1);
-
-    ssd1306_gotoXY(10, 18);
-    ssd1306_puts(spitch, &Font_7x10, 1);
-
-    ssd1306_gotoXY(64, 18);
-    ssd1306_puts(sroll, &Font_7x10, 1);
-
-}
-
-// deberian ser de un modulo screen
-static bool updateDigitalScreen(angles_t angle){
-    ssd1306_fill(COLOR_ON);
-	displayPitchRollDigital(angle.pitch,angle.roll);
-	return graphic_update();
 }
 
 static void checkHeartBeatTimer(void) {
