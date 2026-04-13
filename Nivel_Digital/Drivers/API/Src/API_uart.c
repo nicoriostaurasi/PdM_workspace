@@ -17,6 +17,20 @@
 /* Buffer Lenght para la configuración */
 #define BUFFER_LENGTH 64
 
+#define UART_RX_FIFO_SIZE 64
+
+static volatile uint8_t rxFifo[UART_RX_FIFO_SIZE];
+static volatile uint16_t rxHead = 0;
+static volatile uint16_t rxTail = 0;
+
+#define UART_TX_FIFO_SIZE 64
+
+static volatile uint8_t txFifo[UART_TX_FIFO_SIZE];
+static volatile uint16_t txHead = 0;
+static volatile uint16_t txTail = 0;
+static volatile bool_t txBusy = false;
+static uint8_t txCurrentByte;
+
 /** Estructura para la instancia de UART */
 static UART_HandleTypeDef apiUartInstance;
 
@@ -29,6 +43,13 @@ static bool_t isModuleInit = false;
 /** Variable para saber si hubo nuevos datos en RX */
 static bool_t isNewData = false;
 
+/** Variable para habilitar el loopback entre RX y TX*/
+static bool_t loopbackEnable = true;
+
+/** Variable para almacenar los caracteres recibidos*/
+static uint8_t charRx;
+
+
 /** @brief Función para imprimir mensajes de inicialización de UART
   * @param pstring: Puntero al string a imprimir
   * @param bufferSize: Tamaño del buffer para limpiar después de imprimir
@@ -36,6 +57,101 @@ static bool_t isNewData = false;
 static void uartInitPrint(uint8_t * pstring, size_t bufferSize){
 	uartSendString(pstring);
 	memset(pstring,0,bufferSize);
+}
+
+void USART2_IRQHandler(void)
+{
+	HAL_UART_IRQHandler(&apiUartInstance);
+}
+
+
+static bool_t uartTxPop(uint8_t *data)
+{
+    if (txHead == txTail) {
+        return false;
+    }
+
+    *data = txFifo[txTail];
+    txTail = (txTail + 1) % UART_TX_FIFO_SIZE;
+    return true;
+}
+
+static void uartStartTxIT(void)
+{
+    if (txBusy) {
+        return;
+    }
+
+    if (uartTxPop(&txCurrentByte)) {
+        txBusy = true;
+        HAL_UART_Transmit_IT(&apiUartInstance, &txCurrentByte, 1);
+    }
+}
+
+static void uartRxPush(uint8_t data)
+{
+    uint16_t nextHead = (rxHead + 1) % UART_RX_FIFO_SIZE;
+
+    if (nextHead == rxTail) {
+        return;
+    }
+
+    rxFifo[rxHead] = data;
+    rxHead = nextHead;
+}
+
+bool_t uartRxPop(uint8_t *data)
+{
+    if (rxHead == rxTail) {
+        return false;
+    }
+
+    *data = rxFifo[rxTail];
+    rxTail = (rxTail + 1) % UART_RX_FIFO_SIZE;
+
+    return true;
+}
+
+static bool_t uartTxPush(uint8_t data)
+{
+    uint16_t nextHead = (txHead + 1) % UART_TX_FIFO_SIZE;
+
+    if (nextHead == txTail) {
+        return false; // lleno
+    }
+
+    txFifo[txHead] = data;
+    txHead = nextHead;
+    return true;
+}
+
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance != USART2) {
+        return;
+    }
+
+    if(loopbackEnable) {
+    	 uartTxPush(charRx);
+    	 uartStartTxIT();
+    }
+
+    uartRxPush(charRx);
+    HAL_UART_Receive_IT(&apiUartInstance, &charRx, 1);
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance != USART2) {
+        return;
+    }
+
+    if (uartTxPop(&txCurrentByte)) {
+        HAL_UART_Transmit_IT(&apiUartInstance, &txCurrentByte, 1);
+    } else {
+        txBusy = false;
+    }
 }
 
 /** @brief Función para obtener la tasa de baudios actual
@@ -117,9 +233,11 @@ bool_t uartInit(){
 	apiUartInstance.Init.Mode = UART_MODE_TX_RX;
 	apiUartInstance.Init.HwFlowCtl = UART_HWCONTROL_NONE;
 	apiUartInstance.Init.OverSampling = UART_OVERSAMPLING_16;
+	HAL_NVIC_EnableIRQ(USART2_IRQn);
+	HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
 	// Inicialización de la UART
-	if (HAL_UART_Init(&apiUartInstance) != HAL_OK)
-	{
+	if (HAL_UART_Init(&apiUartInstance) != HAL_OK ||
+		HAL_UART_Receive_IT(&apiUartInstance,&charRx,1) != HAL_OK){
 		return false;
 	} else {
 		isModuleInit = true;

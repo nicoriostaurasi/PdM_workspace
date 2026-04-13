@@ -226,19 +226,17 @@ void cmdParserInit(void){
 void cmdPoll(void){
 	static uint8_t currentDataIndex = 0;
 	static cmd_status_t cmdProcessStatus;
-	uint8_t aux;
+	static uint8_t currentRecChar = 0;
 	switch(cmdParserStateFsm) {
 		case CMD_IDLE:{
-			uartReceiveStringSize(&aux, 1);
-			if(isNewDataOnRx()){
-				uartSendStringSize(&aux,1);
+			if(uartRxPop(&currentRecChar)){
 				// Si detecto un caracter válido de un nuevo comando, lo guardo y cambio de estado
-				if (aux != '\r' && aux != '\n') {
+				if (currentRecChar != '\r' && currentRecChar != '\n') {
 					cmdParserStateFsm = CMD_RECEIVING;
 					// limpio el buffer por si hay basura
 					memset(uartRxBuffer,0,CMD_MAX_LINE);
 					// Almaceno el primer caracter
-					uartRxBuffer[0] = (char)toupper((unsigned char)aux);
+					uartRxBuffer[0] = (char)toupper((unsigned char)currentRecChar);
 					currentDataIndex = 1;
 				}
 			}
@@ -246,17 +244,15 @@ void cmdPoll(void){
 		}
 
 		case CMD_RECEIVING:{
-			uartReceiveStringSize(&aux, 1);
-			if(isNewDataOnRx()){
-				uartSendStringSize(&aux,1);
-				if (aux == '\r' || aux == '\n'){
+			if(uartRxPop(&currentRecChar)){
+				if (currentRecChar == '\r' || currentRecChar == '\n'){
 					// Una vez que se recibe el último caracter se procesa la trama
 					cmdParserStateFsm = CMD_PROCESS;
 					uartRxBuffer[currentDataIndex] = '\0';
 					currentDataIndex++;
 				}else{
 					// Si hay caracteres válidos se continua almacenando
-					uartRxBuffer[currentDataIndex] = (char)toupper((unsigned char)aux);
+					uartRxBuffer[currentDataIndex] = (char)toupper((unsigned char)currentRecChar);
 					currentDataIndex++;
 				}
 			}

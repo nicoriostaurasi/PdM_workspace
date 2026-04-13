@@ -61,4 +61,7 @@ uint32_t getCurrentBaudrate(void);
  */
 bool_t changeCurrentBaudrate(uint32_t newBaudrate);
 
+bool_t uartRxPop(uint8_t *data);
+
+
 #endif /* API_INC_API_UART_H_ */

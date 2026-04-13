@@ -20,6 +20,7 @@
 #include "main.h"
 #include "API_digital_angle_meter.h"
 #include "API_debounce.h"
+#include "API_cmdparser.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -101,7 +102,7 @@ int main(void)
     /* USER CODE END WHILE */
 	debounceFSM_update();
 	Digital_Angle_Meter_FSM_Update();
-
+	cmdPoll();
 	/* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
