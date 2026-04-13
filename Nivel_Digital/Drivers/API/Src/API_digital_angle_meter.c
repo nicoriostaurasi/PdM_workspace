@@ -108,7 +108,7 @@ static bool digital_angle_meter_init() {
 		return false;
 	}
 
-	HAL_Delay(1000);
+//	HAL_Delay(1000);
 
 	return true;
 }

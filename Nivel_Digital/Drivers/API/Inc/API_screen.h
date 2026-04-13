@@ -13,11 +13,9 @@
 #include "API_angle.h"
 #include <stdbool.h>
 
-bool screen_drawDigitalInclinometer(angles_t angle);
 bool screen_start(void);
 bool updateDigitalScreen(angles_t angle);
 bool updateAnalogScreen(angles_t angle);
-
 
 
 #endif /* API_INC_API_SCREEN_H_ */

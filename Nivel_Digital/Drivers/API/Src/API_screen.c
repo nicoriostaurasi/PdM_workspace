@@ -14,18 +14,31 @@ bool screen_start(){
 	return ssd1306_init();
 }
 
-static int16_t round_to_int(float x) {
-    if (x >= 0.0f) return (int16_t)(x + 0.5f);
-    return (int16_t)(x - 0.5f);
+static void buildBox(){
+	ssd1306_drawRect(2, 0, 126, 64, COLOR_ON);
+	ssd1306_drawRect(2+1, 0+1, 126-2, 64-2, COLOR_ON);
+
 }
 
-static float clampf(float value, float min, float max) {
-    if (value < min) return min;
-    if (value > max) return max;
-    return value;
+static void buildAngleBox(uint16_t x, uint16_t y, char* tittle, char* angle){
+	ssd1306_drawRect(x, y, 126/2-1, 64-2, COLOR_ON);
+	ssd1306_drawHLine(x, y+1, 126/2-1, COLOR_ON);
+	ssd1306_gotoXY(x+2, y+4);
+	ssd1306_puts(tittle, &Font_7x10, COLOR_ON);
+	ssd1306_gotoXY(x+2, y+15);
+	ssd1306_puts(angle, &Font_11x18, COLOR_ON);
+
 }
 
-static void angle_to_string(float value, char *buf) {
+static void buildTittle(char* tittle){
+	if(tittle==NULL){
+		return;
+	}
+	ssd1306_gotoXY(4, 3);
+    ssd1306_puts(tittle, &Font_7x10, COLOR_ON);
+}
+
+static void floatToString(float value, char *buf){
     int16_t entero;
     uint16_t decimal;
     uint8_t idx = 0;
@@ -33,6 +46,9 @@ static void angle_to_string(float value, char *buf) {
     if (value < 0.0f) {
         buf[idx++] = '-';
         value = -value;
+    }else{
+    	buf[idx++] = ' ';
+        value = value;
     }
 
     entero = (int16_t)value;
@@ -47,11 +63,9 @@ static void angle_to_string(float value, char *buf) {
         buf[idx++] = '0' + (entero / 100);
         buf[idx++] = '0' + ((entero / 10) % 10);
         buf[idx++] = '0' + (entero % 10);
-    } else if (entero >= 10) {
+    } else{
         buf[idx++] = '0' + (entero / 10);
         buf[idx++] = '0' + (entero % 10);
-    } else {
-        buf[idx++] = '0' + entero;
     }
 
     buf[idx++] = '.';
@@ -59,8 +73,18 @@ static void angle_to_string(float value, char *buf) {
     buf[idx++] = 0;
 }
 
+static int16_t round_to_int(float x) {
+    if (x >= 0.0f) return (int16_t)(x + 0.5f);
+    return (int16_t)(x - 0.5f);
+}
 
- bool screen_drawDigitalInclinometer(angles_t angle) {
+static float clampf(float value, float min, float max) {
+    if (value < min) return min;
+    if (value > max) return max;
+    return value;
+}
+
+static void screen_drawAnalogInclinometer(angles_t angle) {
     char rollStr[8];
     char pitchStr[8];
 
@@ -85,8 +109,8 @@ static void angle_to_string(float value, char *buf) {
     bubbleX = cx + round_to_int((rollClamped / maxVisualAngle) * maxOffset);
     bubbleY = cy - round_to_int((pitchClamped / maxVisualAngle) * maxOffset);
 
-    angle_to_string(angle.roll, rollStr);
-    angle_to_string(angle.pitch, pitchStr);
+    floatToString(angle.roll, rollStr);
+    floatToString(angle.pitch, pitchStr);
 
     ssd1306_fill(COLOR_OFF);
 
@@ -95,15 +119,15 @@ static void angle_to_string(float value, char *buf) {
 
     /* Título */
     ssd1306_gotoXY(4, 2);
-    ssd1306_puts("INCLINOMETRO", &Font_7x10, COLOR_ON);
+    ssd1306_puts("NIVEL ANALOGICO", &Font_7x10, COLOR_ON);
 
     /* Visor circular */
     ssd1306_drawCircle(cx, cy, radius, COLOR_ON);
     ssd1306_drawCircle(cx, cy, radius - 1, COLOR_ON);
 
     /* Referencias centrales */
-    ssd1306_drawLine(cx - radius + 4, cy, cx + radius - 4, cy, COLOR_ON);
-    ssd1306_drawLine(cx, cy - radius + 4, cx, cy + radius - 4, COLOR_ON);
+//    ssd1306_drawLine(cx - radius + 4, cy, cx + radius - 4, cy, COLOR_ON);
+//    ssd1306_drawLine(cx, cy - radius + 4, cx, cy + radius - 4, COLOR_ON);
 
     /* Marcas diagonales suaves */
     ssd1306_drawPixel(cx - 10, cy - 10, COLOR_ON);
@@ -121,94 +145,52 @@ static void angle_to_string(float value, char *buf) {
     ssd1306_drawRect(70, 14, 54, 42, COLOR_ON);
 
     ssd1306_gotoXY(76, 18);
-    ssd1306_puts("ROLL", &Font_7x10, COLOR_ON);
+//    ssd1306_puts("ROLL", &Font_7x10, COLOR_ON);
     ssd1306_gotoXY(76, 28);
-    ssd1306_puts(rollStr, &Font_11x18, COLOR_ON);
+//    ssd1306_puts(rollStr, &Font_11x18, COLOR_ON);
 
     ssd1306_gotoXY(76, 48);
-    ssd1306_puts("P", &Font_7x10, COLOR_ON);
+//    ssd1306_puts("P", &Font_7x10, COLOR_ON);
     ssd1306_gotoXY(84, 48);
-    ssd1306_puts(pitchStr, &Font_7x10, COLOR_ON);
-
-    return graphic_update();
+//    ssd1306_puts(pitchStr, &Font_7x10, COLOR_ON);
 }
-
- static void floatToString2Dec(float value, char *out)
- {
-     int32_t int_part;
-     int32_t dec_part;
-     int idx = 0;
-
-     if (value < 0.0f)
-     {
-         out[idx++] = '-';
-         value = -value;
-     }
-
-     int_part = (int32_t)value;
-     dec_part = (int32_t)((value - (float)int_part) * 100.0f + 0.5f);
-
-     if (dec_part >= 100)
-     {
-         int_part += 1;
-         dec_part = 0;
-     }
-
-     /* convertir parte entera */
-     if (int_part >= 100)
-     {
-         out[idx++] = (char)('0' + (int_part / 100) % 10);
-         out[idx++] = (char)('0' + (int_part / 10) % 10);
-         out[idx++] = (char)('0' + (int_part % 10));
-     }
-     else if (int_part >= 10)
-     {
-         out[idx++] = (char)('0' + (int_part / 10) % 10);
-         out[idx++] = (char)('0' + (int_part % 10));
-     }
-     else
-     {
-         out[idx++] = (char)('0' + int_part);
-     }
-
-     out[idx++] = '.';
-     out[idx++] = (char)('0' + (dec_part / 10) % 10);
-     out[idx++] = (char)('0' + (dec_part % 10));
-     out[idx] = '\0';
- }
 
 
 static void displayPitchRollDigital(float pitch, float roll)
 {
      char spitch[12];
      char sroll[12];
-
-     floatToString2Dec(pitch, spitch);
-     floatToString2Dec(roll, sroll);
-
      ssd1306_fill(COLOR_OFF);
 
-     ssd1306_gotoXY(8, 0);
-     ssd1306_puts("PITCH", &Font_7x10, 1);
 
-     ssd1306_gotoXY(72, 0);
-     ssd1306_puts("ROLL", &Font_7x10, 1);
+     buildBox();
+     buildTittle("NIVEL DIGITAL");
+     floatToString(pitch, spitch);
+     floatToString(roll, sroll);
+     buildAngleBox(2+1,11+1, "PITCH",spitch);
+     buildAngleBox(2+1+126/2-1,11+1, "ROLL", sroll);
 
-     ssd1306_gotoXY(10, 18);
-     ssd1306_puts(spitch, &Font_7x10, 1);
-
-     ssd1306_gotoXY(64, 18);
-     ssd1306_puts(sroll, &Font_7x10, 1);
-
+//     ssd1306_gotoXY(8, 10);
+//     ssd1306_puts("PITCH", &Font_7x10, 1);
+//
+//     ssd1306_gotoXY(72, 10);
+//     ssd1306_puts("ROLL", &Font_7x10, 1);
+//
+//     ssd1306_gotoXY(10, 40);
+//     ssd1306_puts(spitch, &Font_7x10, 1);
+//
+//     ssd1306_gotoXY(64, 40);
+//     ssd1306_puts(sroll, &Font_7x10, 1);
  }
 
 bool updateAnalogScreen(angles_t angle){
 	ssd1306_fill(COLOR_OFF);
-	screen_drawDigitalInclinometer(angle);
+	screen_drawAnalogInclinometer(angle);
+	return graphic_update();
 }
 
 bool updateDigitalScreen(angles_t angle){
-    ssd1306_fill(COLOR_ON);
+    ssd1306_fill(COLOR_OFF);
  	displayPitchRollDigital(angle.pitch,angle.roll);
  	return graphic_update();
  }

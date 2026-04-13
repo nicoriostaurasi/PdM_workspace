@@ -18,9 +18,11 @@ char ssd1306_putc(char ch, FontDef_t* Font, uint8_t color);
 void ssd1306_drawPixel(uint16_t x, uint16_t y, uint8_t color);
 void ssd1306_drawRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t color);
 void ssd1306_drawCircle(int16_t x0, int16_t y0, int16_t r, uint8_t color);
-void ssd1306_drawLine(int x0, int y0, int x1, int y1, uint8_t color);
+//void ssd1306_drawLine(int x0, int y0, int x1, int y1, uint8_t color);
 void ssd1306_fillCircle(int16_t x0, int16_t y0, int16_t r, uint8_t color);
 void graphic_init(void);
+void ssd1306_drawHLine(uint16_t x, uint16_t y, uint16_t w, uint8_t color);
+
 bool graphic_update(void);
 
 
