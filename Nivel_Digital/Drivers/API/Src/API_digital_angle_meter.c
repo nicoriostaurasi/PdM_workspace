@@ -76,7 +76,7 @@ static void checkHeartBeatTimer(void) {
 
 static bool digital_angle_meter_init() {
 	// inicializa los modulos perifericos necesarios para que funcione la FSM
-	displayMode = DIGITAL;
+	displayMode = ANALOGIC;
 
 	if(!init_i2c_1()){
 		return false;

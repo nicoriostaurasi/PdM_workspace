@@ -22,6 +22,7 @@ void ssd1306_drawCircle(int16_t x0, int16_t y0, int16_t r, uint8_t color);
 void ssd1306_fillCircle(int16_t x0, int16_t y0, int16_t r, uint8_t color);
 void graphic_init(void);
 void ssd1306_drawHLine(uint16_t x, uint16_t y, uint16_t w, uint8_t color);
+void ssd1306_drawVLine(uint16_t x, uint16_t y, uint16_t w, uint8_t color);
 
 bool graphic_update(void);
 

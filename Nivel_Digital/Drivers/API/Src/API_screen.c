@@ -89,9 +89,9 @@ static void screen_drawAnalogInclinometer(angles_t angle) {
     char pitchStr[8];
 
     /* Parámetros del visor circular */
-    const int16_t cx = 32;
-    const int16_t cy = 32;
-    const int16_t radius = 20;
+    const int16_t cx = 64;
+    const int16_t cy = 37;
+    const int16_t radius = 21;
     const int16_t bubbleRadius = 3;
 
     /* Se toma +/-45° como rango visual */
@@ -102,57 +102,38 @@ static void screen_drawAnalogInclinometer(angles_t angle) {
     float pitchClamped;
     int16_t bubbleX;
     int16_t bubbleY;
+    ssd1306_fill(COLOR_OFF);
+
+    buildBox();
+    buildTittle("NIVEL ANALOGICO");
+
 
     rollClamped = clampf(angle.roll, -maxVisualAngle, maxVisualAngle);
     pitchClamped = clampf(angle.pitch, -maxVisualAngle, maxVisualAngle);
 
-    bubbleX = cx + round_to_int((rollClamped / maxVisualAngle) * maxOffset);
-    bubbleY = cy - round_to_int((pitchClamped / maxVisualAngle) * maxOffset);
+    bubbleX = cx + round_to_int((pitchClamped / maxVisualAngle) * maxOffset);
+    bubbleY = cy - round_to_int((rollClamped / maxVisualAngle) * maxOffset);
 
-    floatToString(angle.roll, rollStr);
-    floatToString(angle.pitch, pitchStr);
-
-    ssd1306_fill(COLOR_OFF);
-
-    /* Marco general */
-    ssd1306_drawRect(0, 0, 128, 64, COLOR_ON);
-
-    /* Título */
-    ssd1306_gotoXY(4, 2);
-    ssd1306_puts("NIVEL ANALOGICO", &Font_7x10, COLOR_ON);
 
     /* Visor circular */
     ssd1306_drawCircle(cx, cy, radius, COLOR_ON);
     ssd1306_drawCircle(cx, cy, radius - 1, COLOR_ON);
 
     /* Referencias centrales */
-//    ssd1306_drawLine(cx - radius + 4, cy, cx + radius - 4, cy, COLOR_ON);
-//    ssd1306_drawLine(cx, cy - radius + 4, cx, cy + radius - 4, COLOR_ON);
+    ssd1306_drawHLine(cx-radius, cy, radius*2, COLOR_ON);
+    ssd1306_drawVLine(cx, cy-radius , radius*2, COLOR_ON);
 
     /* Marcas diagonales suaves */
     ssd1306_drawPixel(cx - 10, cy - 10, COLOR_ON);
     ssd1306_drawPixel(cx + 10, cy - 10, COLOR_ON);
     ssd1306_drawPixel(cx - 10, cy + 10, COLOR_ON);
     ssd1306_drawPixel(cx + 10, cy + 10, COLOR_ON);
+   /* Burbuja */
 
-    /* Burbuja */
     ssd1306_fillCircle(bubbleX, bubbleY, bubbleRadius, COLOR_ON);
 
     /* Punto central */
     ssd1306_drawPixel(cx, cy, COLOR_ON);
-
-    /* Panel derecho */
-    ssd1306_drawRect(70, 14, 54, 42, COLOR_ON);
-
-    ssd1306_gotoXY(76, 18);
-//    ssd1306_puts("ROLL", &Font_7x10, COLOR_ON);
-    ssd1306_gotoXY(76, 28);
-//    ssd1306_puts(rollStr, &Font_11x18, COLOR_ON);
-
-    ssd1306_gotoXY(76, 48);
-//    ssd1306_puts("P", &Font_7x10, COLOR_ON);
-    ssd1306_gotoXY(84, 48);
-//    ssd1306_puts(pitchStr, &Font_7x10, COLOR_ON);
 }
 
 
@@ -170,18 +151,7 @@ static void displayPitchRollDigital(float pitch, float roll)
      buildAngleBox(2+1,11+1, "PITCH",spitch);
      buildAngleBox(2+1+126/2-1,11+1, "ROLL", sroll);
 
-//     ssd1306_gotoXY(8, 10);
-//     ssd1306_puts("PITCH", &Font_7x10, 1);
-//
-//     ssd1306_gotoXY(72, 10);
-//     ssd1306_puts("ROLL", &Font_7x10, 1);
-//
-//     ssd1306_gotoXY(10, 40);
-//     ssd1306_puts(spitch, &Font_7x10, 1);
-//
-//     ssd1306_gotoXY(64, 40);
-//     ssd1306_puts(sroll, &Font_7x10, 1);
- }
+}
 
 bool updateAnalogScreen(angles_t angle){
 	ssd1306_fill(COLOR_OFF);
