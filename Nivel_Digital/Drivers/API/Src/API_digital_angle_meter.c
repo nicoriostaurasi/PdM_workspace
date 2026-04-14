@@ -20,10 +20,13 @@
 #include "API_screen.h"
 #include "API_angle.h"
 #include "API_graphic.h"
+#include "API_cmdparser.h"
 
 #define FSM_TICK_DELAY 1
 #define HEARTBEAT_RATE 50
 #define SENSOR_SAMPLE_RATE 10
+
+static cmd_id_t currentCmd;
 
 typedef enum {
 	INIT = 0,
@@ -48,11 +51,28 @@ static delay_t fsmDelay;
 static delay_t heartBeatLedTimer;
 static delay_t sampleRateTimer;
 
-//llama al modulo de uart, y pregunta si hubo un comando valido
-static bool checkUartCmd(){
-	return false;
+void toggleLevelMode(void){
+	if(displayMode == DIGITAL) {
+		displayMode = ANALOGIC;
+	} else {
+		displayMode = DIGITAL;
+	}
 }
 
+void setDisplayModeToDigital(void){
+	displayMode = DIGITAL;
+}
+
+void setDisplayModeToAnalogic(void){
+	displayMode = ANALOGIC;
+}
+
+
+//llama al modulo de uart, y pregunta si hubo un comando valido
+/* static bool checkUartCmd(){
+	return cmdGetPendingCommand(&currentCmd);
+}
+ */
 //llama al modulo de timer por sw y checkea el timer del sensor
 static bool checkSensorSamplingTimer(){
 	return delayRead(&sampleRateTimer);
@@ -119,7 +139,7 @@ void Digital_Angle_Meter_FSM_Init() {
 
 void Digital_Angle_Meter_FSM_Update() {
 	static angles_t currentAngle;
-	static ADXL345_AccelG_t accel;
+	static ADXL345_AccelG_t currentAccel;
 
 	bool ret;
 
@@ -136,7 +156,7 @@ void Digital_Angle_Meter_FSM_Update() {
 			}
 
 			case IDLE: {
-				if(checkUartCmd()) {
+				if(cmdGetPendingCommand(&currentCmd)) {
 					digitalAngleMeterFsmState = HANDLE_UART;
 				} else if(checkButtonPressed()) {
 					digitalAngleMeterFsmState = HANDLE_BUTTON;
@@ -149,23 +169,66 @@ void Digital_Angle_Meter_FSM_Update() {
 			}
 
 			case HANDLE_UART: {
-				//To be Develop
-				break;
+				switch (currentCmd) {
+ 				        case CMD_HELP:{
+				            cmdPrintHelp();
+				            break;
+ 				        }
+
+ 				        case CMD_READ_ANGLE:{
+ 				        	uartSendString((uint8_t*)"\nthe current angle is\r\n");
+				            break;
+ 				        }
+
+ 				        case CMD_READ_ACCELERATION:{
+ 				        	uartSendString((uint8_t*)"\nthe current acceleration is\r\n");
+ 				        	break;
+ 				        }
+
+ 				        case CMD_STATUS:{
+ 				        	uartSendString((uint8_t*)"\nthe current status is\r\n");
+ 				        	break;
+ 				        }
+
+ 				        case CMD_MODE_GET:{
+ 				        	uartSendString((uint8_t*)"\nthe current mode is\r\n");
+ 				        	break;
+ 				        }
+
+ 				        case CMD_MODE_TOGGLE:{
+ 				        	uartSendString((uint8_t*)"\ntoggle mode\r\n");
+ 							toggleLevelMode();
+ 				        	break;
+ 				        }
+
+ 				        case CMD_MODE_DIGITAL:{
+ 				        	uartSendString((uint8_t*)"\nset to digital\r\n");
+ 				        	setDisplayModeToDigital();
+ 				        	break;
+ 				        }
+
+ 				        case CMD_MODE_ANALOG:{
+ 				        	uartSendString((uint8_t*)"\nset to analog\r\n");
+ 				        	setDisplayModeToAnalogic();
+ 				        	break;
+ 				        }
+						default:{
+ 				        	uartSendString((uint8_t*)"\nunknown command\r\n");
+							break;
+						}
+				    }
+				    digitalAngleMeterFsmState = IDLE;
+				    break;
 			}
 
 			case HANDLE_BUTTON: {
-				if(displayMode == DIGITAL) {
-					displayMode = ANALOGIC;
-				} else {
-					displayMode = DIGITAL;
-				}
+				toggleLevelMode();
 				digitalAngleMeterFsmState = UPDATE_DISPLAY;
 				break;
 			}
 
 			case READ_SENSOR: {
-				// Sampleo cada 10mS
-				if(getCurrentAccelerationFromSensor(&accel)){
+				if(getCurrentAccelerationFromSensor(&currentAccel)){
 					digitalAngleMeterFsmState = PROCESS_DATA;
 				} else {
 					digitalAngleMeterFsmState = ERROR_STATE;
@@ -174,7 +237,7 @@ void Digital_Angle_Meter_FSM_Update() {
 			}
 
 			case PROCESS_DATA: {
-				currentAngle = convertAccelerationToAngle(&accel);
+				currentAngle = convertAccelerationToAngle(&currentAccel);
 				digitalAngleMeterFsmState = UPDATE_DISPLAY;
 				break;
 			}

@@ -17,13 +17,13 @@
 /* Buffer Lenght para la configuración */
 #define BUFFER_LENGTH 64
 
-#define UART_RX_FIFO_SIZE 64
+#define UART_RX_FIFO_SIZE 1024
 
 static volatile uint8_t rxFifo[UART_RX_FIFO_SIZE];
 static volatile uint16_t rxHead = 0;
 static volatile uint16_t rxTail = 0;
 
-#define UART_TX_FIFO_SIZE 64
+#define UART_TX_FIFO_SIZE 1024
 
 static volatile uint8_t txFifo[UART_TX_FIFO_SIZE];
 static volatile uint16_t txHead = 0;
@@ -261,6 +261,18 @@ bool_t uartInit(){
 	}
 }
 
+static bool_t uartPushTxBuffer(uint8_t * pstring, uint16_t size){
+	bool_t ret = false;
+	for(uint16_t i=0;i<size;i++){
+		ret = uartTxPush(pstring[i]);
+		uartStartTxIT();
+		if(!ret){
+			return false;
+		}
+	}
+	return true;
+}
+
 /** @brief Función para enviar una cadena de caracteres por UART
   * @param pstring: Puntero al string a enviar
   */
@@ -288,7 +300,7 @@ void uartSendString(uint8_t * pstring){
 			}
 			// Intentar enviar el string por UART, reintentando hasta el número máximo de intentos
 			for(attemptCounter=0;attemptCounter<UART_MAX_TRANSMIT_ATTEMPTS;attemptCounter++) {
-				if(HAL_UART_Transmit(&apiUartInstance, pstring, stringLengthToSend, UART_TRANSMIT_TIMEOUT)==HAL_OK) {
+				if(uartPushTxBuffer(pstring,stringLengthToSend)) {
 					return;
 				}
 			}
@@ -318,7 +330,7 @@ void uartSendStringSize(uint8_t * pstring, uint16_t size){
 	if(UART_MIN_STRING_LENGTH <= size && size <= UART_MAX_STRING_LENGTH) {
 		for(attemptCounter=0;attemptCounter<UART_MAX_TRANSMIT_ATTEMPTS;attemptCounter++) {
 			// Intentar enviar el string por UART, reintentando hasta el número máximo de intentos
-			if(HAL_UART_Transmit(&apiUartInstance, pstring, size, UART_TRANSMIT_TIMEOUT)==HAL_OK) {
+			if(uartPushTxBuffer(pstring,size)) {
 				return;
 			}
 		}

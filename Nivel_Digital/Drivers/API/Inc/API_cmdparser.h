@@ -8,6 +8,9 @@
 #ifndef API_INC_API_CMDPARSER_H_
 #define API_INC_API_CMDPARSER_H_
 
+#include "API_delay.h"
+
+//#include <stdbool.h>
 /* Definiciones de constantes para el parser de comandos */
 #define CMD_MAX_LINE 64
 #define CMD_MAX_TOKENS 3
@@ -20,6 +23,22 @@ typedef enum {
 	CMD_ERR_UNKNOWN,
 	CMD_ERR_ARG,
 } cmd_status_t;
+
+typedef enum{
+	CMD_HELP = 0,
+	CMD_READ_ANGLE,
+	CMD_READ_ACCELERATION,
+	CMD_STATUS,
+	CMD_MODE_GET,
+	CMD_MODE_TOGGLE,
+	CMD_MODE_DIGITAL,
+	CMD_MODE_ANALOG,
+} cmd_id_t;
+
+typedef struct {
+    cmd_id_t id;
+    bool_t pending;
+} cmd_event_t;
 
 /**
  * @brief Inicializa el módulo parser de comandos
@@ -36,5 +55,9 @@ void cmdPoll(void);
  * @brief Imprime por UART la lista de comandos disponibles
  */
 void cmdPrintHelp(void);
+
+bool_t cmdGetPendingCommand(cmd_id_t *cmd);
+
+void helpAction(void);
 
 #endif /* API_INC_API_CMDPARSER_H_ */
