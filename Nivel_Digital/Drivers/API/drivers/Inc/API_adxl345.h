@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 /**
- * @brief   Lectura cruda (raw) de aceleración en cuentas del ADC del sensor.
+ * @brief   Lectura raw de aceleración en cuentas del ADC del sensor.
  */
 typedef struct
 {

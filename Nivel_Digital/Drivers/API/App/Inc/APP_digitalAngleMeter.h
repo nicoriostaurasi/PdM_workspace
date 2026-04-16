@@ -7,8 +7,8 @@
  * @author  nicol
  */
 
-#ifndef API_INC_API_DIGITAL_ANGLE_METER_H_
-#define API_INC_API_DIGITAL_ANGLE_METER_H_
+#ifndef APP_INC_API_DIGITAL_ANGLE_METER_H_
+#define APP_INC_API_DIGITAL_ANGLE_METER_H_
 
 /**
  * @brief   Inicializa la FSM en su estado de arranque.
@@ -24,4 +24,4 @@ void digitalAngleMeter_fsmInit(void);
  */
 void digitalAngleMeter_fsmUpdate(void);
 
-#endif /* API_INC_API_DIGITAL_ANGLE_METER_H_ */
+#endif /* APP_INC_API_DIGITAL_ANGLE_METER_H_ */
