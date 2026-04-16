@@ -2,7 +2,7 @@
  * @file  SRV_accelerometer.c
  * @brief Capa de abstraccion del acelerometro; delega en el driver ADXL345.
  * @date 13 abr 2026
- * @author Nicolas Rios Taurasi
+ * @author Ing. Nicolás Gabriel Rios Taurasi
  */
 
 #include <stdlib.h>

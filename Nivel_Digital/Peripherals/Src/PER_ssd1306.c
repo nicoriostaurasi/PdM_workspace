@@ -2,7 +2,7 @@
  * @file  PER_ssd1306.c
  * @brief Driver para la pantalla OLED SSD1306 via I2C.
  * @date 12 abr 2026
- * @author Nicolas Rios Taurasi
+ * @author Ing. Nicolás Gabriel Rios Taurasi
  */
 
 #include <string.h>
