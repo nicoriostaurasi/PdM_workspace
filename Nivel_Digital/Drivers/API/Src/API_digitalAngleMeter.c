@@ -20,7 +20,7 @@
 #include "API_accelerometer.h"
 #include "API_angle.h"
 #include "API_graphic.h"
-#include "API_cmdparser.h"
+#include "API_cmdParser.h"
 
 #define FSM_TICK_DELAY 1
 #define HEARTBEAT_RATE 20
@@ -273,7 +273,7 @@ void digitalAngleMeter_fsmUpdate() {
 			case FSM_HANDLE_UART: {
 				switch (currentCmd) {
  				        case CMD_HELP:{
-				            cmd_printHelp();
+				            cmdParser_printHelp();
 				            break;
  				        }
 

@@ -41,18 +41,18 @@ typedef enum{
 /**
  * @brief Inicializa el módulo parser de comandos
  */
-void cmd_parserInit(void);
+void cmdParser_init(void);
 
 /**
  * @brief Máquina de estados del Paser. Debe ser llamada periódicamente desde el bucle
  * 		  Procesa hasta 16 bytes por invocación (no bloqueante).
  */
-void cmd_poll(void);
+void cmdParser_poll(void);
 
 /**
  * @brief Imprime por UART la lista de comandos disponibles
  */
-void cmd_printHelp(void);
+void cmdParser_printHelp(void);
 
 bool_t cmd_getPendingCommand(cmd_id_t *cmd);
 

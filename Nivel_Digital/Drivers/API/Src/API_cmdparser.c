@@ -8,7 +8,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "API_cmdparser.h"
+#include "API_cmdParser.h"
 #include "API_uart.h"
 
 /** @brief Tipos de estado para la máquina de estados del parser de comandos */
@@ -206,7 +206,7 @@ static cmd_status_t cmdProcessLine(void)
 /**
  * @brief Inicializa el módulo parser de comandos
  */
-void cmd_parserInit(void){
+void cmdParser_init(void){
 	cmdParserStateFsm = CMD_IDLE;
 	cmdFifoHead = 0;
 	cmdFifoTail = 0;
@@ -217,7 +217,7 @@ void cmd_parserInit(void){
  * @brief FSM del parser. Debe llamarse periódicamente desde el bucle principal.
  *        Procesa un byte por invocación (no bloqueante).
  */
-void cmd_poll(void){
+void cmdParser_poll(void){
 	static uint8_t currentDataIndex = 0;
 	static cmd_status_t cmdProcessStatus;
 	static uint8_t currentRecChar = 0;
@@ -286,7 +286,7 @@ void cmd_poll(void){
 /**
  * @brief Imprime por UART la lista de comandos disponibles
  */
-void cmd_printHelp(void){
+void cmdParser_printHelp(void){
 	uart_sendString((uint8_t*)"\nAvailable Commands with description:\r\n");
  	for (uint8_t i = 0; i < (sizeof(availableCommands) / sizeof(availableCommands[0])); i++){
 		uart_sendString((uint8_t*)availableCommands[i].name);
