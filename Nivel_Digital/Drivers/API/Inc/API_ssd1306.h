@@ -8,10 +8,8 @@
 #ifndef API_INC_API_SSD1306_H_
 #define API_INC_API_SSD1306_H_
 
-#include "API_i2c.h"
 #include <stdint.h>
 #include <stdbool.h>
-#include "fonts.h"
 
 #define COLOR_ON 0x01
 #define COLOR_OFF 0x00

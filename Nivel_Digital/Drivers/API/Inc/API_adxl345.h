@@ -8,7 +8,6 @@
 #ifndef API_INC_API_ADXL345_H_
 #define API_INC_API_ADXL345_H_
 
-#include "API_i2c.h"
 #include <stdbool.h>
 #include <stdint.h>
 

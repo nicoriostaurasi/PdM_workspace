@@ -5,9 +5,10 @@
  *      Author: nicol
  */
 
-#include "API_angle.h"
 #include <math.h>
 #include <stdint.h>
+ 
+#include "API_angle.h"
 
 #define PI                  3.14159265358979323846f
 #define ANGLE_AVG_SAMPLES   3U

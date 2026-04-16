@@ -5,10 +5,11 @@
  *      Author: nicol
  */
 
-#include "API_cmdparser.h"
-#include "API_uart.h"
 #include <string.h>
 #include <ctype.h>
+
+#include "API_cmdparser.h"
+#include "API_uart.h"
 
 /** @brief Tipos de estado para la máquina de estados del parser de comandos */
 typedef enum {

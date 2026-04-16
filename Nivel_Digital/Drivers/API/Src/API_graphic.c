@@ -4,6 +4,8 @@
  *  Created on: 13 abr 2026
  *      Author: nicol
  */
+#include <string.h>
+
 #include "API_graphic.h"
 #include "API_ssd1306.h"
 

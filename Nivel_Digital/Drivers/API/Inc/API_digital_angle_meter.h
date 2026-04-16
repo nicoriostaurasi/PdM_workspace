@@ -9,7 +9,6 @@
 #define API_INC_API_DIGITAL_ANGLE_METER_H_
 
 
-
 void digitalAngleMeter_fsmInit(void);
 void digitalAngleMeter_fsmUpdate(void);
 

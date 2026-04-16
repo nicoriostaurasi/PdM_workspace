@@ -8,10 +8,10 @@
 #ifndef API_INC_API_SCREEN_H_
 #define API_INC_API_SCREEN_H_
 
-
-#include "API_digital_angle_meter.h"
-#include "API_angle.h"
 #include <stdbool.h>
+
+//#include "API_digital_angle_meter.h"
+#include "API_angle.h"
 
 bool screen_start(void);
 bool screen_updateDigital(angles_t angle);

@@ -5,10 +5,10 @@
  *      Author: nicol
  */
 
-#include "API_digital_angle_meter.h"
 #include <stdbool.h>
-#include <math.h>
 #include <stdio.h>
+
+#include "API_digital_angle_meter.h"
 #include "API_debounce.h"
 #include "API_delay.h"
 #include "API_i2c.h"

@@ -4,8 +4,11 @@
  *  Created on: 12 abr 2026
  *      Author: nicol
  */
+
 #include <stdlib.h>
+
 #include "API_adxl345.h"
+#include "API_i2c.h"
 
 #define ADXL345_I2C_ADDRESS   (0x1D << 1)
 

@@ -4,10 +4,11 @@
  *  Created on: 12 abr 2026
  *      Author: nicol
  */
-#include "API_ssd1306.h"
-#include "API_i2c.h"
+
 #include <string.h>
 
+#include "API_ssd1306.h"
+#include "API_i2c.h"
 
 #define SSD1306_I2C_ADDR 0x78
 #define SSD1306_I2C_TIMEOUT 1000

@@ -5,10 +5,12 @@
  *      Author: nicol
  */
 
-#include "API_debounce.h"
-#include "stm32f4xx_hal.h"
-#include "main.h"
 #include <string.h>
+
+#include "API_debounce.h"
+#include "main.h"
+#include "stm32f4xx_hal.h"
+
 
 /** @brief Estados de la máquina de estados del debounce */
 typedef enum{

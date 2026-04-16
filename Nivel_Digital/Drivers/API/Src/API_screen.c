@@ -4,8 +4,9 @@
  *  Created on: 13 abr 2026
  *      Author: nicol
  */
-#include "API_screen.h"
 #include <stdint.h>
+
+#include "API_screen.h"
 #include "API_ssd1306.h"
 #include "API_graphic.h"
 

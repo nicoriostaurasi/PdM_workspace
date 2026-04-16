@@ -9,8 +9,9 @@
 #define API_INC_API_GRAPHIC_H_
 
 #include <stdint.h>
-#include "fonts.h"
 #include <stdbool.h>
+
+#include "fonts.h"
 
 void graphic_init(void);
 bool graphic_update(void);

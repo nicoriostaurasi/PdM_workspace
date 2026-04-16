@@ -5,9 +5,10 @@
  *      Author: nicol
  */
 
+#include <stdlib.h>
+ 
 #include "API_adxl345.h"
 #include "API_accelerometer.h"
-#include <stdio.h>
 
 bool accelerometer_initSensor(void){
 	return adxl345_init();
