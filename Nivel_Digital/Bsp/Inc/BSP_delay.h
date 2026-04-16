@@ -58,5 +58,11 @@ void delay_write( delay_t * delay, tick_t duration );
  */
 bool_t delay_isRunning( delay_t* delay );
 
+/**
+ * @brief   Espera bloqueante durante la cantidad de milisegundos indicada.
+ *
+ * @param   ms  Tiempo de espera en milisegundos.
+ */
+void delay_blocking( tick_t ms );
 
 #endif /* BSP_INC_BSP_DELAY_H_ */

@@ -38,4 +38,11 @@ bool accelerometer_readAccelerationG(adxl345_accelG_t *accel);
  */
 bool accelerometer_initSensor(void);
 
+/**
+ * @brief   Chequeo de salud no invasivo del sensor de aceleración.
+ *
+ * @return  true si el sensor responde correctamente, false en caso contrario.
+ */
+bool accelerometer_isAlive(void);
+
 #endif /* SRV_INC_SRV_ACCELEROMETER_H_ */

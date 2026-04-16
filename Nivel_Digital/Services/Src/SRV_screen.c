@@ -10,8 +10,8 @@
 #include <stdint.h>
 
 #include "SRV_screen.h"
-#include "PER_ssd1306.h"
 #include "SRV_graphic.h"
+#include "PER_ssd1306.h"
 
 /** @brief  Inicializa el subsistema de pantalla (capa gráfica + driver SSD1306).
  *  @return true si la inicialización fue exitosa, false en caso contrario.
@@ -19,6 +19,13 @@
 bool screen_start(){
 	graphic_init();
 	return ssd1306_init();
+}
+
+/** @brief  Chequeo de salud no invasivo de la pantalla OLED.
+ *  @return true si el display responde en el bus I2C, false en caso contrario.
+ */
+bool screen_isAlive(void){
+	return ssd1306_isAlive();
 }
 
 /** @brief  Dibuja el recuadro doble decorativo que enmarca toda la pantalla. */

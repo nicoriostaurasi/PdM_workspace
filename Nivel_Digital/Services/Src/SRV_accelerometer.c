@@ -7,8 +7,8 @@
 
 #include <stdlib.h>
 
-#include "PER_adxl345.h"
 #include "SRV_accelerometer.h"
+#include "PER_adxl345.h"
 
 /**
  * @brief Inicializa el sensor acelerometro delegando en adxl345_init.
@@ -27,6 +27,14 @@ bool accelerometer_initSensor(void){
  * @param accel Puntero a la estructura donde se almacenan los valores en g.
  * @return true si la lectura fue exitosa, false si el puntero es NULL o fallo la lectura.
  */
+/**
+ * @brief Chequeo de salud no invasivo del sensor de aceleracion.
+ * @return true si el sensor responde correctamente, false en caso contrario.
+ */
+bool accelerometer_isAlive(void){
+	return adxl345_isAlive();
+}
+
 bool accelerometer_readAccelerationG(adxl345_accelG_t *accel)
 {
 	bool ret;

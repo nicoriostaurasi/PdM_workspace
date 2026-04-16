@@ -85,3 +85,11 @@ bool_t delay_isRunning( delay_t* delay ){
 	  }
 	  return (delay->running);
 }
+
+/** @brief  Espera bloqueante durante la cantidad de milisegundos indicada.
+ *
+ *  @param  ms  Tiempo de espera en milisegundos.
+ */
+void delay_blocking( tick_t ms ){
+	HAL_Delay(ms);
+}

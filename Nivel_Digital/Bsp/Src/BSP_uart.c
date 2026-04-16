@@ -14,8 +14,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "stm32f4xx_hal.h"
 #include "BSP_uart.h"
+#include "stm32f4xx_hal.h"
 
 /** @brief Longitud del buffer auxiliar para mensajes de configuración */
 #define BUFFER_LENGTH 64

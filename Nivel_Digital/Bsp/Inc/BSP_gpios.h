@@ -9,11 +9,7 @@
 #ifndef BSP_INC_BSP_GPIOS_H_
 #define BSP_INC_BSP_GPIOS_H_
 
-#define B1_Pin GPIO_PIN_13              /**< Pin del botón de usuario B1 */
-#define B1_GPIO_Port GPIOC              /**< Puerto del botón de usuario B1 */
-
-#define LD2_Pin GPIO_PIN_5              /**< Pin del LED de usuario LD2 */
-#define LD2_GPIO_Port GPIOA             /**< Puerto del LED de usuario LD2 */
+#include <stdbool.h>
 
 /**
  * @brief   Inicializa los GPIOs de la placa (LED de heartbeat y botón de usuario).
@@ -25,5 +21,11 @@ void gpios_init(void);
  */
 void gpios_toggleLed(void);
 
+/**
+ * @brief   Lee el estado del botón de usuario B1.
+ *
+ * @return  true si el botón está presionado, false si está liberado.
+ */
+bool gpios_readButton(void);
 
 #endif /* BSP_INC_BSP_GPIOS_H_ */

@@ -16,17 +16,15 @@
 
 #include "APP_digitalAngleMeter.h"
 #include "SRV_debounce.h"
-#include "BSP_delay.h"
-#include "BSP_i2c.h"
-#include "BSP_uart.h"
-#include "BSP_gpios.h"
-#include "PER_adxl345.h"
-#include "PER_ssd1306.h"
 #include "SRV_screen.h"
 #include "SRV_accelerometer.h"
 #include "SRV_angle.h"
 #include "SRV_graphic.h"
 #include "SRV_cmdParser.h"
+#include "BSP_delay.h"
+#include "BSP_i2c.h"
+#include "BSP_uart.h"
+#include "BSP_gpios.h"
 
 /** @brief Período del tick de la FSM principal (en ms) */
 #define FSM_TICK_DELAY 1
@@ -190,16 +188,16 @@ static void printSystemStatus(void){
 			uart_getLoopback() ? "ON" : "OFF");
 	uart_sendString(statusBuffer);
 
-	/* ADXL345: WHO_AM_I por I2C, no reconfigura nada */
-	if(adxl345_isAlive()){
+	/* Acelerómetro: chequeo de salud no invasivo */
+	if(accelerometer_isAlive()){
 		uart_sendString((uint8_t*)"ADXL345      : OK\r\n");
 	} else {
 		uart_sendString((uint8_t*)"ADXL345      : FAIL\r\n");
 		allOk = false;
 	}
 
-	/* SSD1306: ping I2C no invasivo */
-	if(ssd1306_isAlive()){
+	/* Pantalla OLED: chequeo de salud no invasivo */
+	if(screen_isAlive()){
 		uart_sendString((uint8_t*)"OLED SSD1306 : OK\r\n");
 	} else {
 		uart_sendString((uint8_t*)"OLED SSD1306 : FAIL\r\n");
@@ -292,7 +290,7 @@ static bool digital_angle_meter_init() {
 		return false;
 	}
 
-	HAL_Delay(1000);
+	delay_blocking(1000);
 
 	return true;
 }
@@ -326,7 +324,7 @@ static void checkSystemIntegrity(void){
 		uart_sendString((uint8_t*)"\nSystem is not failing, recovering OK...\r\n");
 		digitalAngleMeterFsmState = FSM_INIT;
 	}
-	HAL_Delay(1000);
+	delay_blocking(1000);
 
 }
 

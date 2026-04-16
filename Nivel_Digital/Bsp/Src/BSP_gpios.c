@@ -8,11 +8,25 @@
 #include "BSP_gpios.h"
 #include "stm32f4xx_hal.h"
 
+#define B1_Pin GPIO_PIN_13              /**< Pin del botón de usuario B1 */
+#define B1_GPIO_Port GPIOC              /**< Puerto del botón de usuario B1 */
+
+#define LD2_Pin GPIO_PIN_5              /**< Pin del LED de usuario LD2 */
+#define LD2_GPIO_Port GPIOA             /**< Puerto del LED de usuario LD2 */
+
 /**
  * @brief Conmuta el estado del LED LD2.
  */
 void gpios_toggleLed(void){
 	HAL_GPIO_TogglePin(LD2_GPIO_Port,LD2_Pin);
+}
+
+/**
+ * @brief Lee el estado eléctrico del botón de usuario B1.
+ * @return true si el botón está presionado, false si está liberado.
+ */
+bool gpios_readButton(void){
+	return (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) != GPIO_PIN_SET);
 }
 
 /**

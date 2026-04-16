@@ -36,5 +36,11 @@ bool screen_updateDigital(angles_t angle);
  */
 bool screen_updateAnalog(angles_t angle);
 
+/**
+ * @brief   Chequeo de salud no invasivo de la pantalla OLED.
+ *
+ * @return  true si el display responde en el bus I2C, false en caso contrario.
+ */
+bool screen_isAlive(void);
 
 #endif /* SRV_INC_SRV_SCREEN_H_ */

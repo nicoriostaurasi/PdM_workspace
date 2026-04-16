@@ -8,8 +8,7 @@
 #include <string.h>
 
 #include "SRV_debounce.h"
-#include "main.h"
-#include "stm32f4xx_hal.h"
+#include "BSP_gpios.h"
 
 
 /** @brief Estados de la máquina de estados del debounce */
@@ -151,5 +150,5 @@ bool_t debounce_readKey(void){
  *  @return true si el botón está físicamente presionado, false si está liberado.
  */
 static bool checkButtonStatusPressedRaw(){
-	return (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) != GPIO_PIN_SET);
+	return gpios_readButton();
 }
