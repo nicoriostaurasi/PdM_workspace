@@ -32,21 +32,21 @@ static bool_t _keyPressedFlag = false;
 static bool checkButtonStatusPressedRaw(void);
 
 /** @brief Inicializa la máquina de estados del debounce */
-void debounceFSM_init(){
+void debounce_fsmInit(){
   // Inicializo el delay para el debounce y la máquina de estados del debounce
   memset(&debounceDelay, 0 ,sizeof(debounceDelay));
-  delayInit(&debounceDelay, DEBOUNCER_SAMPLE_RATE);
+  delay_init(&debounceDelay, DEBOUNCER_SAMPLE_RATE);
   _debounceFsmState = BUTTON_UP;
 }
 
 /** @brief Actualiza la máquina de estados del debounce */
-void debounceFSM_update(){
+void debounce_fsmUpdate(){
 
   static uint8_t fallingStateCounter = 0;
   static uint8_t risingStateCounter = 0;
 
   // Verifico que el tiempo de muestreo del debounce haya transcurrido
-  if(!delayRead(&debounceDelay)){
+  if(!delay_read(&debounceDelay)){
 		  return;
 	}
 
@@ -124,7 +124,7 @@ void debounceFSM_update(){
 /** @brief Lee si la tecla fue presionado, si devuelve true resetea el valor
   * @retval true si el botón fue presionado, false si no lo fue
   */
-bool_t readKey(void){
+bool_t debounce_readKey(void){
 	// Si la bandera de tecla presionada esta seteada, se resetea y se devuelve true
 	if(_keyPressedFlag){
 		_keyPressedFlag = false;

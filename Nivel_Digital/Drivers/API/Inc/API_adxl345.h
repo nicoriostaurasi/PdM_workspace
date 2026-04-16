@@ -17,11 +17,11 @@ typedef struct
     int16_t x;
     int16_t y;
     int16_t z;
-} ADXL345_Raw_t;
+} adxl345_raw_t;
 
 bool adxl345_init(void);
 bool adxl345_readDeviceId(uint8_t *devid);
-bool adxl345_readRawAcceleration(ADXL345_Raw_t *raw);
+bool adxl345_readRawAcceleration(adxl345_raw_t *raw);
 
 /** @brief Chequeo de salud no invasivo: lee el DEVID y lo compara con el valor esperado
  *  @return true si responde al bus I2C y el DEVID es correcto, false en cualquier otro caso

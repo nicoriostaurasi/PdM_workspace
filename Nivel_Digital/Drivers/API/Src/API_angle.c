@@ -16,7 +16,7 @@ static float rad_to_deg(float rad){
     return rad * (180.0f / PI);
 }
 
-angles_t convertAccelerationToAngle(ADXL345_AccelG_t* pAccel){
+angles_t angle_fromAcceleration(adxl345_accelG_t* pAccel){
 	static angles_t sampleBuffer[ANGLE_AVG_SAMPLES] = {0};
 	static uint8_t writeIdx = 0;
 

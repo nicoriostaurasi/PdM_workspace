@@ -29,14 +29,14 @@ typedef struct{
   * @param  duration: Duration of the delay
   * @retval None
   */
-void delayInit( delay_t * delay, tick_t duration );
+void delay_init( delay_t * delay, tick_t duration );
 
 /**
   * @brief  Reads the status of a delay
   * @param  delay: Pointer to the delay structure
   * @retval bool_t: true if the delay has completed, false otherwise
   */
-bool_t delayRead( delay_t * delay );
+bool_t delay_read( delay_t * delay );
 
 /**
   * @brief  Writes a new duration to an existing delay
@@ -44,14 +44,14 @@ bool_t delayRead( delay_t * delay );
   * @param  duration: New duration for the delay
   * @retval None
   */
-void delayWrite( delay_t * delay, tick_t duration );
+void delay_write( delay_t * delay, tick_t duration );
 
 /**
   * @brief  Check if the delay is active
   * @param  delay: Pointer to the delay structure
   * @retval bool_t: true if the delay is running, false otherwise
   */
-bool_t delayIsRunning( delay_t* delay );
+bool_t delay_isRunning( delay_t* delay );
 
 
 #endif /* API_INC_API_DELAY_H_ */

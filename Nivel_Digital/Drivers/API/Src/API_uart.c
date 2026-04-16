@@ -54,8 +54,8 @@ static uint8_t charRx;
   * @param pstring: Puntero al string a imprimir
   * @param bufferSize: Tamaño del buffer para limpiar después de imprimir
   */
-static void uartInitPrint(uint8_t * pstring, size_t bufferSize){
-	uartSendString(pstring);
+static void uart_initPrint(uint8_t * pstring, size_t bufferSize){
+	uart_sendString(pstring);
 	memset(pstring,0,bufferSize);
 }
 
@@ -65,7 +65,7 @@ void USART2_IRQHandler(void)
 }
 
 
-static bool_t uartTxPop(uint8_t *data)
+static bool_t uart_txPop(uint8_t *data)
 {
     if (txHead == txTail) {
         return false;
@@ -76,19 +76,19 @@ static bool_t uartTxPop(uint8_t *data)
     return true;
 }
 
-static void uartStartTxIT(void)
+static void uart_startTxIT(void)
 {
     if (txBusy) {
         return;
     }
 
-    if (uartTxPop(&txCurrentByte)) {
+    if (uart_txPop(&txCurrentByte)) {
         txBusy = true;
         HAL_UART_Transmit_IT(&apiUartInstance, &txCurrentByte, 1);
     }
 }
 
-static void uartRxPush(uint8_t data)
+static void uart_rxPush(uint8_t data)
 {
     uint16_t nextHead = (rxHead + 1) % UART_RX_FIFO_SIZE;
 
@@ -100,7 +100,7 @@ static void uartRxPush(uint8_t data)
     rxHead = nextHead;
 }
 
-bool_t uartRxPop(uint8_t *data)
+bool_t uart_rxPop(uint8_t *data)
 {
     if (rxHead == rxTail) {
         return false;
@@ -112,7 +112,7 @@ bool_t uartRxPop(uint8_t *data)
     return true;
 }
 
-static bool_t uartTxPush(uint8_t data)
+static bool_t uart_txPush(uint8_t data)
 {
     uint16_t nextHead = (txHead + 1) % UART_TX_FIFO_SIZE;
 
@@ -133,11 +133,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     }
 
     if(loopbackEnable) {
-    	 uartTxPush(charRx);
-    	 uartStartTxIT();
+    	 uart_txPush(charRx);
+    	 uart_startTxIT();
     }
 
-    uartRxPush(charRx);
+    uart_rxPush(charRx);
     HAL_UART_Receive_IT(&apiUartInstance, &charRx, 1);
 }
 
@@ -147,7 +147,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
         return;
     }
 
-    if (uartTxPop(&txCurrentByte)) {
+    if (uart_txPop(&txCurrentByte)) {
         HAL_UART_Transmit_IT(&apiUartInstance, &txCurrentByte, 1);
     } else {
         txBusy = false;
@@ -157,7 +157,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 /** @brief Función para obtener la tasa de baudios actual
  *  @return: La tasa de baudios actual
  */
-uint32_t getCurrentBaudrate(void){
+uint32_t uart_getCurrentBaudrate(void){
 	return currentUartBaudrate;
 }
 
@@ -165,7 +165,7 @@ uint32_t getCurrentBaudrate(void){
  *  @param newBaudrate: La nueva tasa de baudios a configurar
  *  @return: true si el cambio fue exitoso, false en caso contrario
  */
-bool_t changeCurrentBaudrate(uint32_t newBaudrate){
+bool_t uart_changeCurrentBaudrate(uint32_t newBaudrate){
 	uint8_t buffConfig[BUFFER_LENGTH];
 	isModuleInit = false;
 
@@ -187,19 +187,19 @@ bool_t changeCurrentBaudrate(uint32_t newBaudrate){
 		isModuleInit = true;
 		// Imprimir configuración de UART
 		sprintf((char*)buffConfig,"Uart Configurada!\r\n");
-		uartInitPrint(buffConfig, BUFFER_LENGTH);
+		uart_initPrint(buffConfig, BUFFER_LENGTH);
 
 		sprintf((char*)buffConfig,"BaudRate: %ld \r\n",apiUartInstance.Init.BaudRate);
-		uartInitPrint(buffConfig, BUFFER_LENGTH);
+		uart_initPrint(buffConfig, BUFFER_LENGTH);
 
 		sprintf((char*)buffConfig,"Longitud de Palabra: 8 BITS\r\n");
-		uartInitPrint(buffConfig, BUFFER_LENGTH);
+		uart_initPrint(buffConfig, BUFFER_LENGTH);
 
 		sprintf((char*)buffConfig,"Bit de Paridad: NO\r\n");
-		uartInitPrint(buffConfig, BUFFER_LENGTH);
+		uart_initPrint(buffConfig, BUFFER_LENGTH);
 
 		sprintf((char*)buffConfig,"Bits de Stop: 1 BIT\r\n");
-		uartInitPrint(buffConfig, BUFFER_LENGTH);
+		uart_initPrint(buffConfig, BUFFER_LENGTH);
 
 		return true;
 	}
@@ -208,7 +208,7 @@ bool_t changeCurrentBaudrate(uint32_t newBaudrate){
 /** @brief Función para saber si hubo una lectura exitosa
  *  @return: true si hay nuevos datos, false en caso contrario
  */
-bool isNewDataOnRx(void) {
+bool uart_isNewDataOnRx(void) {
 	if(isNewData){
 		isNewData=false;
 		return true;
@@ -220,7 +220,7 @@ bool isNewDataOnRx(void) {
 /** @brief Función para inicializar la UART
   * @return: true si la inicialización fue exitosa, false en caso contrario
   */
-bool_t uartInit(){
+bool_t uart_init(){
 	uint8_t buffConfig[BUFFER_LENGTH];
 
 	currentUartBaudrate = 115200;
@@ -243,40 +243,40 @@ bool_t uartInit(){
 		isModuleInit = true;
 		// Imprimir configuración de UART
 		sprintf((char*)buffConfig,"Uart Configurada!\r\n");
-		uartInitPrint(buffConfig, BUFFER_LENGTH);
+		uart_initPrint(buffConfig, BUFFER_LENGTH);
 
 		sprintf((char*)buffConfig,"BaudRate: %ld \r\n",apiUartInstance.Init.BaudRate);
-		uartInitPrint(buffConfig, BUFFER_LENGTH);
+		uart_initPrint(buffConfig, BUFFER_LENGTH);
 
 		sprintf((char*)buffConfig,"Longitud de Palabra: 8 BITS\r\n");
-		uartInitPrint(buffConfig, BUFFER_LENGTH);
+		uart_initPrint(buffConfig, BUFFER_LENGTH);
 
 		sprintf((char*)buffConfig,"Bit de Paridad: NO\r\n");
-		uartInitPrint(buffConfig, BUFFER_LENGTH);
+		uart_initPrint(buffConfig, BUFFER_LENGTH);
 
 		sprintf((char*)buffConfig,"Bits de Stop: 1 BIT\r\n");
-		uartInitPrint(buffConfig, BUFFER_LENGTH);
+		uart_initPrint(buffConfig, BUFFER_LENGTH);
 
 		return true;
 	}
 }
 
-static bool_t uartPushTxBuffer(uint8_t * pstring, uint16_t size){
+static bool_t uart_pushTxBuffer(uint8_t * pstring, uint16_t size){
 	for(uint16_t i=0;i<size;i++){
-		if(!uartTxPush(pstring[i])){
+		if(!uart_txPush(pstring[i])){
 			// aseguramos que lo que sí entró al FIFO arranque a transmitirse
-			uartStartTxIT();
+			uart_startTxIT();
 			return false;
 		}
 	}
-	uartStartTxIT();
+	uart_startTxIT();
 	return true;
 }
 
 /** @brief Función para enviar una cadena de caracteres por UART
   * @param pstring: Puntero al string a enviar
   */
-void uartSendString(uint8_t * pstring){
+void uart_sendString(uint8_t * pstring){
 	uint16_t stringCharCounter = 0;
 	uint16_t attemptCounter = 0;
 	uint16_t stringLengthToSend = 0;
@@ -300,7 +300,7 @@ void uartSendString(uint8_t * pstring){
 			}
 			// Intentar enviar el string por UART, reintentando hasta el número máximo de intentos
 			for(attemptCounter=0;attemptCounter<UART_MAX_TRANSMIT_ATTEMPTS;attemptCounter++) {
-				if(uartPushTxBuffer(pstring,stringLengthToSend)) {
+				if(uart_pushTxBuffer(pstring,stringLengthToSend)) {
 					return;
 				}
 			}
@@ -310,12 +310,12 @@ void uartSendString(uint8_t * pstring){
 }
 
 /** @brief Habilita o deshabilita el eco (loopback) de RX hacia TX */
-void uartSetLoopback(bool_t enable){
+void uart_setLoopback(bool_t enable){
 	loopbackEnable = enable;
 }
 
 /** @brief Consulta si el eco (loopback) está habilitado */
-bool_t uartGetLoopback(void){
+bool_t uart_getLoopback(void){
 	return loopbackEnable;
 }
 
@@ -323,7 +323,7 @@ bool_t uartGetLoopback(void){
   * @param pstring: Puntero al string a enviar
   * @param size: Tamaño del string a enviar
   */
-void uartSendStringSize(uint8_t * pstring, uint16_t size){
+void uart_sendStringSize(uint8_t * pstring, uint16_t size){
 	uint16_t attemptCounter = 0;
 
 	// Validar que el módulo esté inicializado y que el puntero no sea NULL
@@ -340,7 +340,7 @@ void uartSendStringSize(uint8_t * pstring, uint16_t size){
 	if(UART_MIN_STRING_LENGTH <= size && size <= UART_MAX_STRING_LENGTH) {
 		for(attemptCounter=0;attemptCounter<UART_MAX_TRANSMIT_ATTEMPTS;attemptCounter++) {
 			// Intentar enviar el string por UART, reintentando hasta el número máximo de intentos
-			if(uartPushTxBuffer(pstring,size)) {
+			if(uart_pushTxBuffer(pstring,size)) {
 				return;
 			}
 		}
@@ -352,7 +352,7 @@ void uartSendStringSize(uint8_t * pstring, uint16_t size){
   * @param pstring: Puntero al buffer donde se almacenará la cadena recibida
   * @param size: Tamaño del string a recibir
   */
-void uartReceiveStringSize(uint8_t * pstring, uint16_t size){
+void uart_receiveStringSize(uint8_t * pstring, uint16_t size){
 	HAL_StatusTypeDef ret;
 
 	// Validar que el módulo esté inicializado y que el puntero no sea NULL

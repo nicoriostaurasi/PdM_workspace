@@ -74,8 +74,6 @@ bool ssd1306_init(void){
 
     ssd1306_sendCommand(SSD1306_DEACTIVATE_SCROLL);
 
-    ssd1306_fill(COLOR_OFF);
-
     return true;
 }
 

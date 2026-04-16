@@ -15,10 +15,10 @@ typedef struct
     float x;
     float y;
     float z;
-} ADXL345_AccelG_t;
+} adxl345_accelG_t;
 
 
-bool accelerometer_readAccelerationG(ADXL345_AccelG_t *accel);
+bool accelerometer_readAccelerationG(adxl345_accelG_t *accel);
 bool accelerometer_initSensor(void);
 
 #endif /* API_INC_API_ACCELEROMETER_H_ */

@@ -24,7 +24,6 @@ typedef struct {
 } display_t;
 
 bool ssd1306_init(void);
-void ssd1306_fill(uint8_t value);
 bool ssd1306_updateScreen(display_t *disp);
 
 /** @brief Chequeo de salud no invasivo: ping I2C al display sin reconfigurarlo

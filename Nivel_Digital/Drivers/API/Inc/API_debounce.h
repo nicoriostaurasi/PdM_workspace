@@ -18,17 +18,17 @@
 /** @brief Inicializa la máquina de estados del debounce
   * @retval none
   */
-void debounceFSM_init(void);
+void debounce_fsmInit(void);
 
 /** @brief Actualiza la máquina de estados del debounce
   * @retval none
   */
-void debounceFSM_update(void);
+void debounce_fsmUpdate(void);
 
 /** @brief Lee si la tecla fue presionado, si devuelve true resetea el valor
   * @retval true si el botón fue presionado
   */
-bool_t readKey(void);
+bool_t debounce_readKey(void);
 
 
 #endif /* API_INC_API_DEBOUNCE_H_ */

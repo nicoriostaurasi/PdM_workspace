@@ -46,7 +46,7 @@ bool i2c_isDeviceReady(uint16_t DevAddress, uint32_t Trials, uint32_t Timeout){
 	return false;
 }
 
-bool init_i2c_1(void){
+bool i2c_init1(void){
 	hi2c1.Instance = I2C1;
 	hi2c1.Init.ClockSpeed = 100000;
 	hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;

@@ -58,7 +58,7 @@ static bool_t cmdFifoPush(cmd_id_t id)
     return true;
 }
 
-bool_t cmdGetPendingCommand(cmd_id_t *cmd)
+bool_t cmd_getPendingCommand(cmd_id_t *cmd)
 {
     if (cmd == NULL) {
         return false;
@@ -99,23 +99,23 @@ static int8_t tokenize(char *input, char *argv[])
 static void cmdExecutError(cmd_status_t errorAction){
 	switch(errorAction){
 		case CMD_ERR_OVERFLOW: {
-			uartSendString((uint8_t*)"\n\rERROR: line too long\r\n");
+			uart_sendString((uint8_t*)"\n\rERROR: line too long\r\n");
 			break;
 		}
 		case CMD_ERR_SYNTAX: {
-			uartSendString((uint8_t*)"\n\rERROR: Syntax error\r\n");
+			uart_sendString((uint8_t*)"\n\rERROR: Syntax error\r\n");
 			break;
 		}
 		case CMD_ERR_UNKNOWN: {
-			uartSendString((uint8_t*)"\n\rERROR: Unknown command\r\n");
+			uart_sendString((uint8_t*)"\n\rERROR: Unknown command\r\n");
 			break;
 		}
 		case CMD_ERR_ARG: {
-			uartSendString((uint8_t*)"\n\rERROR: Bad arguments\r\n");
+			uart_sendString((uint8_t*)"\n\rERROR: Bad arguments\r\n");
 			break;
 		}
 		default: {
-			uartSendString((uint8_t*)"\n\rERROR: Unknown command\r\n");
+			uart_sendString((uint8_t*)"\n\rERROR: Unknown command\r\n");
 			break;
 		}
 	}
@@ -205,7 +205,7 @@ static cmd_status_t cmdProcessLine(void)
 /**
  * @brief Inicializa el módulo parser de comandos
  */
-void cmdParserInit(void){
+void cmd_parserInit(void){
 	cmdParserStateFsm = CMD_IDLE;
 	cmdFifoHead = 0;
 	cmdFifoTail = 0;
@@ -216,13 +216,13 @@ void cmdParserInit(void){
  * @brief FSM del parser. Debe llamarse periódicamente desde el bucle principal.
  *        Procesa un byte por invocación (no bloqueante).
  */
-void cmdPoll(void){
+void cmd_poll(void){
 	static uint8_t currentDataIndex = 0;
 	static cmd_status_t cmdProcessStatus;
 	static uint8_t currentRecChar = 0;
 	switch(cmdParserStateFsm) {
 		case CMD_IDLE:{
-			if(uartRxPop(&currentRecChar)){
+			if(uart_rxPop(&currentRecChar)){
 				// Si detecto un caracter válido de un nuevo comando, lo guardo y cambio de estado
 				if (currentRecChar != '\r' && currentRecChar != '\n') {
 					cmdParserStateFsm = CMD_RECEIVING;
@@ -237,7 +237,7 @@ void cmdPoll(void){
 		}
 
 		case CMD_RECEIVING:{
-			if(uartRxPop(&currentRecChar)){
+			if(uart_rxPop(&currentRecChar)){
 				if (currentRecChar == '\r' || currentRecChar == '\n'){
 					// Una vez que se recibe el último caracter se procesa la trama
 					cmdParserStateFsm = CMD_PROCESS;
@@ -285,17 +285,17 @@ void cmdPoll(void){
 /**
  * @brief Imprime por UART la lista de comandos disponibles
  */
-void cmdPrintHelp(void){
-	uartSendString((uint8_t*)"\nAvailable Commands with description:\r\n");
+void cmd_printHelp(void){
+	uart_sendString((uint8_t*)"\nAvailable Commands with description:\r\n");
  	for (uint8_t i = 0; i < (sizeof(availableCommands) / sizeof(availableCommands[0])); i++){
-		uartSendString((uint8_t*)availableCommands[i].name);
-		uartSendString((uint8_t*)"\r\n");
+		uart_sendString((uint8_t*)availableCommands[i].name);
+		uart_sendString((uint8_t*)"\r\n");
 		for (uint8_t j = 0;j<availableCommands[i].availableDifferentArgs;j++){
-			uartSendString((uint8_t*)"        ");
-			uartSendString((uint8_t*)availableCommands[i].argumentDetail[j].argument);
-			uartSendString((uint8_t*)" -> ");
-			uartSendString((uint8_t*)availableCommands[i].argumentDetail[j].description);
-			uartSendString((uint8_t*)"\r\n");
+			uart_sendString((uint8_t*)"        ");
+			uart_sendString((uint8_t*)availableCommands[i].argumentDetail[j].argument);
+			uart_sendString((uint8_t*)" -> ");
+			uart_sendString((uint8_t*)availableCommands[i].argumentDetail[j].description);
+			uart_sendString((uint8_t*)"\r\n");
 		}
 	}
 }

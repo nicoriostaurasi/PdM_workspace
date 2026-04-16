@@ -10,7 +10,6 @@
 
 #include "API_delay.h"
 
-//#include <stdbool.h>
 /* Definiciones de constantes para el parser de comandos */
 #define CMD_MAX_LINE 64
 #define CMD_MAX_TOKENS 3
@@ -42,19 +41,19 @@ typedef enum{
 /**
  * @brief Inicializa el módulo parser de comandos
  */
-void cmdParserInit(void);
+void cmd_parserInit(void);
 
 /**
  * @brief Máquina de estados del Paser. Debe ser llamada periódicamente desde el bucle
  * 		  Procesa hasta 16 bytes por invocación (no bloqueante).
  */
-void cmdPoll(void);
+void cmd_poll(void);
 
 /**
  * @brief Imprime por UART la lista de comandos disponibles
  */
-void cmdPrintHelp(void);
+void cmd_printHelp(void);
 
-bool_t cmdGetPendingCommand(cmd_id_t *cmd);
+bool_t cmd_getPendingCommand(cmd_id_t *cmd);
 
 #endif /* API_INC_API_CMDPARSER_H_ */

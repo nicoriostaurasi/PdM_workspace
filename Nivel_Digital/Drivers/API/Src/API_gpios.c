@@ -9,7 +9,7 @@
 #include "stm32f4xx_hal.h"
 
 
-void board_toggle_led(void){
+void gpios_toggleLed(void){
 	HAL_GPIO_TogglePin(LD2_GPIO_Port,LD2_Pin);
 }
 
@@ -18,7 +18,7 @@ void board_toggle_led(void){
   * @param None
   * @retval None
   */
-void board_gpios_init(void){
+void gpios_init(void){
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */

@@ -16,6 +16,6 @@ typedef struct
     float roll;
 } angles_t;
 
-angles_t convertAccelerationToAngle(ADXL345_AccelG_t* pAccel);
+angles_t angle_fromAcceleration(adxl345_accelG_t* pAccel);
 
 #endif /* API_INC_API_ANGLE_H_ */

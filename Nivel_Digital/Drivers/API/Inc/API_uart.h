@@ -26,46 +26,46 @@
 /** @brief Función para inicializar la UART
   * @return: true si la inicialización fue exitosa, false en caso contrario
   */
-bool_t uartInit(void);
+bool_t uart_init(void);
 
 /** @brief Función para enviar una cadena de caracteres por UART
   * @param pstring: Puntero al string a enviar
   */
-void uartSendString(uint8_t * pstring);
+void uart_sendString(uint8_t * pstring);
 
 /** @brief Función para enviar una cadena de caracteres por UART con un tamaño específico
   * @param pstring: Puntero al string a enviar
   * @param size: Tamaño del string a enviar
   */
-void uartSendStringSize(uint8_t * pstring, uint16_t size);
+void uart_sendStringSize(uint8_t * pstring, uint16_t size);
 
 /** @brief Función para recibir una cadena de caracteres por UART con un tamaño específico
   * @param pstring: Puntero al buffer donde se almacenará la cadena recibida
   * @param size: Tamaño del string a recibir
   */
-void uartReceiveStringSize(uint8_t * pstring, uint16_t size);
+void uart_receiveStringSize(uint8_t * pstring, uint16_t size);
 
 /** @brief Función para saber si hubo una lectura exitosa
  *  @return: true si hay nuevos datos, false en caso contrario
  */
-bool isNewDataOnRx(void);
+bool uart_isNewDataOnRx(void);
 
 /** @brief Función para obtener la tasa de baudios actual
  *  @return: La tasa de baudios actual
  */
-uint32_t getCurrentBaudrate(void);
+uint32_t uart_getCurrentBaudrate(void);
 
 /** @brief Función para cambiar la tasa de baudios
  *  @param newBaudrate: La nueva tasa de baudios a configurar
  *  @return: true si el cambio fue exitoso, false en caso contrario
  */
-bool_t changeCurrentBaudrate(uint32_t newBaudrate);
+bool_t uart_changeCurrentBaudrate(uint32_t newBaudrate);
 
-bool_t uartRxPop(uint8_t *data);
+bool_t uart_rxPop(uint8_t *data);
 
-void uartSetLoopback(bool_t enable);
+void uart_setLoopback(bool_t enable);
 
-bool_t uartGetLoopback(void);
+bool_t uart_getLoopback(void);
 
 
 #endif /* API_INC_API_UART_H_ */

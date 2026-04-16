@@ -15,18 +15,18 @@ bool screen_start(){
 }
 
 static void buildBox(){
-	ssd1306_drawRect(2, 0, 126, 64, COLOR_ON);
-	ssd1306_drawRect(2+1, 0+1, 126-2, 64-2, COLOR_ON);
+	graphic_drawRect(2, 0, 126, 64, COLOR_ON);
+	graphic_drawRect(2+1, 0+1, 126-2, 64-2, COLOR_ON);
 
 }
 
 static void buildAngleBox(uint16_t x, uint16_t y, char* tittle, char* angle){
-	ssd1306_drawRect(x, y, 126/2-1, 64-2, COLOR_ON);
-	ssd1306_drawHLine(x, y+1, 126/2-1, COLOR_ON);
-	ssd1306_gotoXY(x+2, y+4);
-	ssd1306_puts(tittle, &Font_7x10, COLOR_ON);
-	ssd1306_gotoXY(x+2, y+15);
-	ssd1306_puts(angle, &Font_11x18, COLOR_ON);
+	graphic_drawRect(x, y, 126/2-1, 64-2, COLOR_ON);
+	graphic_drawHLine(x, y+1, 126/2-1, COLOR_ON);
+	graphic_gotoXY(x+2, y+4);
+	graphic_puts(tittle, &Font_7x10, COLOR_ON);
+	graphic_gotoXY(x+2, y+15);
+	graphic_puts(angle, &Font_11x18, COLOR_ON);
 
 }
 
@@ -34,8 +34,8 @@ static void buildTittle(char* tittle){
 	if(tittle==NULL){
 		return;
 	}
-	ssd1306_gotoXY(4, 3);
-    ssd1306_puts(tittle, &Font_7x10, COLOR_ON);
+	graphic_gotoXY(4, 3);
+    graphic_puts(tittle, &Font_7x10, COLOR_ON);
 }
 
 static void floatToString(float value, char *buf){
@@ -99,7 +99,7 @@ static void screen_drawAnalogInclinometer(angles_t angle) {
     float pitchClamped;
     int16_t bubbleX;
     int16_t bubbleY;
-    ssd1306_fill(COLOR_OFF);
+    graphic_fill(COLOR_OFF);
 
     buildBox();
     buildTittle("NIVEL ANALOGICO");
@@ -113,32 +113,32 @@ static void screen_drawAnalogInclinometer(angles_t angle) {
 
 
     /* Visor circular */
-    ssd1306_drawCircle(cx, cy, radius, COLOR_ON);
-    ssd1306_drawCircle(cx, cy, radius - 1, COLOR_ON);
+    graphic_drawCircle(cx, cy, radius, COLOR_ON);
+    graphic_drawCircle(cx, cy, radius - 1, COLOR_ON);
 
     /* Referencias centrales */
-    ssd1306_drawHLine(cx-radius, cy, radius*2, COLOR_ON);
-    ssd1306_drawVLine(cx, cy-radius , radius*2, COLOR_ON);
+    graphic_drawHLine(cx-radius, cy, radius*2, COLOR_ON);
+    graphic_drawVLine(cx, cy-radius , radius*2, COLOR_ON);
 
     /* Marcas diagonales suaves */
-    ssd1306_drawPixel(cx - 10, cy - 10, COLOR_ON);
-    ssd1306_drawPixel(cx + 10, cy - 10, COLOR_ON);
-    ssd1306_drawPixel(cx - 10, cy + 10, COLOR_ON);
-    ssd1306_drawPixel(cx + 10, cy + 10, COLOR_ON);
+    graphic_drawPixel(cx - 10, cy - 10, COLOR_ON);
+    graphic_drawPixel(cx + 10, cy - 10, COLOR_ON);
+    graphic_drawPixel(cx - 10, cy + 10, COLOR_ON);
+    graphic_drawPixel(cx + 10, cy + 10, COLOR_ON);
    /* Burbuja */
 
-    ssd1306_fillCircle(bubbleX, bubbleY, bubbleRadius, COLOR_ON);
+    graphic_fillCircle(bubbleX, bubbleY, bubbleRadius, COLOR_ON);
 
     /* Punto central */
-    ssd1306_drawPixel(cx, cy, COLOR_ON);
+    graphic_drawPixel(cx, cy, COLOR_ON);
 }
 
 
-static void displayPitchRollDigital(float pitch, float roll)
+static void screen_displayPitchRollDigital(float pitch, float roll)
 {
      char spitch[12];
      char sroll[12];
-     ssd1306_fill(COLOR_OFF);
+     graphic_fill(COLOR_OFF);
 
 
      buildBox();
@@ -150,15 +150,15 @@ static void displayPitchRollDigital(float pitch, float roll)
 
 }
 
-bool updateAnalogScreen(angles_t angle){
-	ssd1306_fill(COLOR_OFF);
+bool screen_updateAnalog(angles_t angle){
+	graphic_fill(COLOR_OFF);
 	screen_drawAnalogInclinometer(angle);
 	return graphic_update();
 }
 
-bool updateDigitalScreen(angles_t angle){
-    ssd1306_fill(COLOR_OFF);
- 	displayPitchRollDigital(angle.pitch,angle.roll);
+bool screen_updateDigital(angles_t angle){
+    graphic_fill(COLOR_OFF);
+ 	screen_displayPitchRollDigital(angle.pitch,angle.roll);
  	return graphic_update();
  }
 

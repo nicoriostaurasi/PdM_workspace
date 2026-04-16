@@ -90,8 +90,8 @@ int main(void)
   /* Initialize all configured peripherals */
 
   /* USER CODE BEGIN 2 */
-  Digital_Angle_Meter_FSM_Init();
-  debounceFSM_init();
+  digitalAngleMeter_fsmInit();
+  debounce_fsmInit();
 
   /* USER CODE END 2 */
 
@@ -100,9 +100,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	debounceFSM_update();
-	Digital_Angle_Meter_FSM_Update();
-	cmdPoll();
+	debounce_fsmUpdate();
+	digitalAngleMeter_fsmUpdate();
+	cmd_poll();
 	/* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

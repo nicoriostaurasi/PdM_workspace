@@ -88,7 +88,7 @@ bool adxl345_isAlive(void){
     return (devId == ADXL345_DEVID_VALUE);
 }
 
-bool adxl345_readRawAcceleration(ADXL345_Raw_t *raw)
+bool adxl345_readRawAcceleration(adxl345_raw_t *raw)
 {
 	bool ret;
     uint8_t rawData[6];

@@ -31,24 +31,24 @@
 static cmd_id_t currentCmd;
 
 typedef enum {
-	INIT = 0,
-	IDLE,
-	HANDLE_UART,
-	HANDLE_BUTTON,
-	READ_SENSOR,
-	PROCESS_DATA,
-	UPDATE_DISPLAY,
-	ERROR_STATE,
+	FSM_INIT = 0,
+	FSM_IDLE,
+	FSM_HANDLE_UART,
+	FSM_HANDLE_BUTTON,
+	FSM_READ_SENSOR,
+	FSM_PROCESS_DATA,
+	FSM_UPDATE_DISPLAY,
+	FSM_ERROR_STATE,
 } digitalAngleMeterState_t;
 
 typedef enum {
-	DIGITAL = 0,
-	ANALOGIC,
+	DISPLAY_DIGITAL = 0,
+	DISPLAY_ANALOGIC,
 } displayMode_t;
 
 
-static digitalAngleMeterState_t digitalAngleMeterFsmState = INIT;
-static displayMode_t displayMode = ANALOGIC;
+static digitalAngleMeterState_t digitalAngleMeterFsmState = FSM_INIT;
+static displayMode_t displayMode = DISPLAY_ANALOGIC;
 static delay_t fsmDelay;
 static delay_t heartBeatLedTimer;
 static delay_t sampleRateTimer;
@@ -56,134 +56,134 @@ static delay_t sampleRateTimer;
 static void printCurrentAngle(angles_t currentAngle){
 	static uint8_t currentAngleBuffer[128];
 	sprintf((char*)currentAngleBuffer,"\nthe current angle is:\r\nPITCH: %.2f°	ROLL: %.2f°\r\n",currentAngle.pitch,currentAngle.roll);
-	uartSendString(currentAngleBuffer);
+	uart_sendString(currentAngleBuffer);
 }
 
-static void printCurrentAcceleration(ADXL345_AccelG_t currentAccel){
+static void printCurrentAcceleration(adxl345_accelG_t currentAccel){
 	static uint8_t currentAccelerationBuffer[128];
 	sprintf((char*)currentAccelerationBuffer,"\nthe current acceleration is:\r\nX: %.2f Y: %.2f Z: %.2f\r\n",currentAccel.x,currentAccel.y,currentAccel.z);
-	uartSendString(currentAccelerationBuffer);
+	uart_sendString(currentAccelerationBuffer);
 }
 
 static void toggleDisplayMode(void){
- 	uartSendString((uint8_t*)"\ntoggle mode\r\n");
-	if(displayMode == DIGITAL) {
-		displayMode = ANALOGIC;
+ 	uart_sendString((uint8_t*)"\ntoggle mode\r\n");
+	if(displayMode == DISPLAY_DIGITAL) {
+		displayMode = DISPLAY_ANALOGIC;
 	} else {
-		displayMode = DIGITAL;
+		displayMode = DISPLAY_DIGITAL;
 	}
 }
 
 
 static void getDisplayMode(void){
-	if(displayMode == DIGITAL) {
-		uartSendString((uint8_t*)"\nthe current mode is DIGITAL\r\n");
+	if(displayMode == DISPLAY_DIGITAL) {
+		uart_sendString((uint8_t*)"\nthe current mode is DIGITAL\r\n");
 	} else {
-		uartSendString((uint8_t*)"\nthe current mode is ANALOGIC\r\n");
+		uart_sendString((uint8_t*)"\nthe current mode is ANALOGIC\r\n");
 	}
 }
 
 static void setDisplayModeToDigital(void){
-	displayMode = DIGITAL;
- 	uartSendString((uint8_t*)"\nset to digital\r\n");
+	displayMode = DISPLAY_DIGITAL;
+ 	uart_sendString((uint8_t*)"\nset to digital\r\n");
 }
 
 static void setDisplayModeToAnalogic(void){
-	displayMode = ANALOGIC;
- 	uartSendString((uint8_t*)"\nset to analog\r\n");
+	displayMode = DISPLAY_ANALOGIC;
+ 	uart_sendString((uint8_t*)"\nset to analog\r\n");
 }
 
 static void getLoopbackState(void){
-	if(uartGetLoopback()){
-		uartSendString((uint8_t*)"\nUART loopback is ON\r\n");
+	if(uart_getLoopback()){
+		uart_sendString((uint8_t*)"\nUART loopback is ON\r\n");
 	} else {
-		uartSendString((uint8_t*)"\nUART loopback is OFF\r\n");
+		uart_sendString((uint8_t*)"\nUART loopback is OFF\r\n");
 	}
 }
 
 static void enableLoopback(void){
-	uartSetLoopback(true);
-	uartSendString((uint8_t*)"\nUART loopback enabled\r\n");
+	uart_setLoopback(true);
+	uart_sendString((uint8_t*)"\nUART loopback enabled\r\n");
 }
 
 static void disableLoopback(void){
-	uartSetLoopback(false);
-	uartSendString((uint8_t*)"\nUART loopback disabled\r\n");
+	uart_setLoopback(false);
+	uart_sendString((uint8_t*)"\nUART loopback disabled\r\n");
 }
 
 static void printSystemStatus(void){
 	static uint8_t statusBuffer[96];
 	bool allOk = true;
 
-	uartSendString((uint8_t*)"\n--- SYSTEM STATUS ---\r\n");
+	uart_sendString((uint8_t*)"\n--- SYSTEM STATUS ---\r\n");
 
 	/* UART: si estamos contestando, anda. Reportamos baudrate y loopback. */
 	sprintf((char*)statusBuffer,
 			"UART         : OK (baud=%lu, loopback=%s)\r\n",
-			getCurrentBaudrate(),
-			uartGetLoopback() ? "ON" : "OFF");
-	uartSendString(statusBuffer);
+			uart_getCurrentBaudrate(),
+			uart_getLoopback() ? "ON" : "OFF");
+	uart_sendString(statusBuffer);
 
 	/* ADXL345: WHO_AM_I por I2C, no reconfigura nada */
 	if(adxl345_isAlive()){
-		uartSendString((uint8_t*)"ADXL345      : OK\r\n");
+		uart_sendString((uint8_t*)"ADXL345      : OK\r\n");
 	} else {
-		uartSendString((uint8_t*)"ADXL345      : FAIL\r\n");
+		uart_sendString((uint8_t*)"ADXL345      : FAIL\r\n");
 		allOk = false;
 	}
 
 	/* SSD1306: ping I2C no invasivo */
 	if(ssd1306_isAlive()){
-		uartSendString((uint8_t*)"OLED SSD1306 : OK\r\n");
+		uart_sendString((uint8_t*)"OLED SSD1306 : OK\r\n");
 	} else {
-		uartSendString((uint8_t*)"OLED SSD1306 : FAIL\r\n");
+		uart_sendString((uint8_t*)"OLED SSD1306 : FAIL\r\n");
 		allOk = false;
 	}
 
 	if(allOk){
-		uartSendString((uint8_t*)"Overall      : HEALTHY\r\n");
+		uart_sendString((uint8_t*)"Overall      : HEALTHY\r\n");
 	} else {
-		uartSendString((uint8_t*)"Overall      : DEGRADED\r\n");
+		uart_sendString((uint8_t*)"Overall      : DEGRADED\r\n");
 	}
 }
 
 
 //llama al modulo de timer por sw y checkea el timer del sensor
 static bool checkSensorSamplingTimer(){
-	return delayRead(&sampleRateTimer);
+	return delay_read(&sampleRateTimer);
 }
 
 //llama al modulo de gpios y pregunta si la tecla fue pulsada
 static bool checkButtonPressed(){
-	return readKey();
+	return debounce_readKey();
 }
 
 // llama al mudulo del sensor y le pide los datos raw
-static bool getCurrentAccelerationFromSensor(ADXL345_AccelG_t* pAccel){
+static bool getCurrentAccelerationFromSensor(adxl345_accelG_t* pAccel){
 	return accelerometer_readAccelerationG(pAccel);
 }
 
 static void checkHeartBeatTimer(void) {
-	if(delayRead(&heartBeatLedTimer)){
-		board_toggle_led();
+	if(delay_read(&heartBeatLedTimer)){
+		gpios_toggleLed();
 	}
 }
 
 static bool digital_angle_meter_init() {
 	// inicializa los modulos perifericos necesarios para que funcione la FSM
-	if(!init_i2c_1()){
+	if(!i2c_init1()){
 		return false;
 	}
 
-	if(!uartInit()){
+	if(!uart_init()){
 		return false;
 	}
 
-	board_gpios_init();
+	gpios_init();
 
-	delayWrite(&fsmDelay,FSM_TICK_DELAY);
-	delayWrite(&heartBeatLedTimer,HEARTBEAT_RATE);
-	delayWrite(&sampleRateTimer,SENSOR_SAMPLE_RATE);
+	delay_write(&fsmDelay,FSM_TICK_DELAY);
+	delay_write(&heartBeatLedTimer,HEARTBEAT_RATE);
+	delay_write(&sampleRateTimer,SENSOR_SAMPLE_RATE);
 
 	if(!accelerometer_initSensor()){
 		return false;
@@ -193,9 +193,10 @@ static bool digital_angle_meter_init() {
 		return false;
 	}
 
-	ssd1306_puts(" NGRT CESE", &Font_11x18, 1);
-	ssd1306_gotoXY(0,20);
-	ssd1306_puts("   FIUBA", &Font_11x18, 1);
+	graphic_gotoXY(0,10);
+	graphic_puts(" NGRT CESE", &Font_11x18, 1);
+	graphic_gotoXY(0,30);
+	graphic_puts("   FIUBA", &Font_11x18, 1);
 
 	if(!graphic_update()){
 		return false;
@@ -209,70 +210,70 @@ static bool digital_angle_meter_init() {
 static void checkSystemIntegrity(void){
 	bool allOk = true;
 
-	if(!init_i2c_1()){
-		uartSendString((uint8_t*)"\nI2C BUS, is not working...\r\n");
+	if(!i2c_init1()){
+		uart_sendString((uint8_t*)"\nI2C BUS, is not working...\r\n");
 		allOk = false;
 	}
 
 	if(!accelerometer_initSensor()){
-		uartSendString((uint8_t*)"\nAccelerometer Sensor, is not working...\r\n");
+		uart_sendString((uint8_t*)"\nAccelerometer Sensor, is not working...\r\n");
 		allOk = false;
 	}
 
 	if(!screen_start()){
-		uartSendString((uint8_t*)"\nOLED Screen, is not working...\r\n");
+		uart_sendString((uint8_t*)"\nOLED Screen, is not working...\r\n");
 		allOk = false;
 	}
 
 	if(allOk){
-		uartSendString((uint8_t*)"\nSystem is not failing, recovering OK...\r\n");
-		digitalAngleMeterFsmState = INIT;
+		uart_sendString((uint8_t*)"\nSystem is not failing, recovering OK...\r\n");
+		digitalAngleMeterFsmState = FSM_INIT;
 	}
 	HAL_Delay(1000);
 
 }
 
 
-void Digital_Angle_Meter_FSM_Init() {
-	digitalAngleMeterFsmState = INIT;
+void digitalAngleMeter_fsmInit() {
+	digitalAngleMeterFsmState = FSM_INIT;
 }
 
-void Digital_Angle_Meter_FSM_Update() {
+void digitalAngleMeter_fsmUpdate() {
 	static angles_t currentAngle;
-	static ADXL345_AccelG_t currentAccel;
+	static adxl345_accelG_t currentAccel;
 
 	bool ret;
 
-	if(delayRead(&fsmDelay)){
+	if(delay_read(&fsmDelay)){
 
 		switch(digitalAngleMeterFsmState) {
-			case INIT: {
+			case FSM_INIT: {
 				if(!digital_angle_meter_init()){
-					delayWrite(&heartBeatLedTimer,HEARTBEAT_RATE_FAIL);
-					digitalAngleMeterFsmState = ERROR_STATE;
+					delay_write(&heartBeatLedTimer,HEARTBEAT_RATE_FAIL);
+					digitalAngleMeterFsmState = FSM_ERROR_STATE;
 				} else {
-					digitalAngleMeterFsmState = IDLE;
+					digitalAngleMeterFsmState = FSM_IDLE;
 				}
 				break;
 			}
 
-			case IDLE: {
-				if(cmdGetPendingCommand(&currentCmd)) {
-					digitalAngleMeterFsmState = HANDLE_UART;
+			case FSM_IDLE: {
+				if(cmd_getPendingCommand(&currentCmd)) {
+					digitalAngleMeterFsmState = FSM_HANDLE_UART;
 				} else if(checkButtonPressed()) {
-					digitalAngleMeterFsmState = HANDLE_BUTTON;
+					digitalAngleMeterFsmState = FSM_HANDLE_BUTTON;
 				}else if(checkSensorSamplingTimer()) {
-					digitalAngleMeterFsmState = READ_SENSOR;
+					digitalAngleMeterFsmState = FSM_READ_SENSOR;
 				}
 
 				checkHeartBeatTimer();
 				break;
 			}
 
-			case HANDLE_UART: {
+			case FSM_HANDLE_UART: {
 				switch (currentCmd) {
  				        case CMD_HELP:{
-				            cmdPrintHelp();
+				            cmd_printHelp();
 				            break;
  				        }
 
@@ -326,70 +327,70 @@ void Digital_Angle_Meter_FSM_Update() {
  				        	break;
  				        }
 						default:{
- 				        	uartSendString((uint8_t*)"\nunknown command\r\n");
+ 				        	uart_sendString((uint8_t*)"\nunknown command\r\n");
 							break;
 						}
 				    }
-				    digitalAngleMeterFsmState = IDLE;
+				    digitalAngleMeterFsmState = FSM_IDLE;
 				    break;
 			}
 
-			case HANDLE_BUTTON: {
+			case FSM_HANDLE_BUTTON: {
 				toggleDisplayMode();
-				digitalAngleMeterFsmState = UPDATE_DISPLAY;
+				digitalAngleMeterFsmState = FSM_UPDATE_DISPLAY;
 				break;
 			}
 
-			case READ_SENSOR: {
+			case FSM_READ_SENSOR: {
 				static uint8_t readSensorRetries = 0;
 				if(getCurrentAccelerationFromSensor(&currentAccel)){
 					readSensorRetries = 0;
-					digitalAngleMeterFsmState = PROCESS_DATA;
+					digitalAngleMeterFsmState = FSM_PROCESS_DATA;
 				} else {
 					readSensorRetries++;
 					if(readSensorRetries >= SENSOR_READ_MAX_RETRIES){
 						readSensorRetries = 0;
-						delayWrite(&heartBeatLedTimer,HEARTBEAT_RATE_FAIL);
-						digitalAngleMeterFsmState = ERROR_STATE;
+						delay_write(&heartBeatLedTimer,HEARTBEAT_RATE_FAIL);
+						digitalAngleMeterFsmState = FSM_ERROR_STATE;
 					} else {
-						// reintento en el próximo tick sin bajar a ERROR_STATE
-						digitalAngleMeterFsmState = IDLE;
+						// reintento en el próximo tick sin bajar a FSM_ERROR_STATE
+						digitalAngleMeterFsmState = FSM_IDLE;
 					}
 				}
 				break;
 			}
 
-			case PROCESS_DATA: {
-				currentAngle = convertAccelerationToAngle(&currentAccel);
-				digitalAngleMeterFsmState = UPDATE_DISPLAY;
+			case FSM_PROCESS_DATA: {
+				currentAngle = angle_fromAcceleration(&currentAccel);
+				digitalAngleMeterFsmState = FSM_UPDATE_DISPLAY;
 				break;
 			}
 
-			case UPDATE_DISPLAY: {
-				if(displayMode == DIGITAL) {
-					ret = updateDigitalScreen(currentAngle);
+			case FSM_UPDATE_DISPLAY: {
+				if(displayMode == DISPLAY_DIGITAL) {
+					ret = screen_updateDigital(currentAngle);
 				} else {
-					ret = updateAnalogScreen(currentAngle);
+					ret = screen_updateAnalog(currentAngle);
 				}
 
 				if(ret) {
-					digitalAngleMeterFsmState = IDLE;
+					digitalAngleMeterFsmState = FSM_IDLE;
 				} else {
-					delayWrite(&heartBeatLedTimer,HEARTBEAT_RATE_FAIL);
-					digitalAngleMeterFsmState = ERROR_STATE;
+					delay_write(&heartBeatLedTimer,HEARTBEAT_RATE_FAIL);
+					digitalAngleMeterFsmState = FSM_ERROR_STATE;
 				}
 
 				break;
 			}
 
-			case ERROR_STATE: {
+			case FSM_ERROR_STATE: {
 				checkSystemIntegrity();
 				checkHeartBeatTimer();
 				break;
 			}
 
 			default: {
-				digitalAngleMeterFsmState = INIT;
+				digitalAngleMeterFsmState = FSM_INIT;
 				break;
 			}
 		}
