@@ -27,6 +27,10 @@ static bool ssd1306_sendCommand(uint8_t command){
 	return ssd1306_writeReg(0x00, command);
 }
 
+bool ssd1306_isAlive(void){
+    return i2c_isDeviceReady(SSD1306_I2C_ADDR, 1, SSD1306_I2C_TIMEOUT);
+}
+
 bool ssd1306_init(void){
 	bool ret;
 	ret = i2c_isDeviceReady(SSD1306_I2C_ADDR, 1, SSD1306_I2C_TIMEOUT);

@@ -14,6 +14,7 @@
 /* Definiciones de constantes para el parser de comandos */
 #define CMD_MAX_LINE 64
 #define CMD_MAX_TOKENS 3
+#define CMD_FIFO_SIZE 4
 
 /** @brief Tipos de estado para la máquina de estados del parser de comandos */
 typedef enum {
@@ -33,12 +34,10 @@ typedef enum{
 	CMD_MODE_TOGGLE,
 	CMD_MODE_DIGITAL,
 	CMD_MODE_ANALOG,
+	CMD_LOOPBACK_GET,
+	CMD_LOOPBACK_ON,
+	CMD_LOOPBACK_OFF,
 } cmd_id_t;
-
-typedef struct {
-    cmd_id_t id;
-    bool_t pending;
-} cmd_event_t;
 
 /**
  * @brief Inicializa el módulo parser de comandos
@@ -57,7 +56,5 @@ void cmdPoll(void);
 void cmdPrintHelp(void);
 
 bool_t cmdGetPendingCommand(cmd_id_t *cmd);
-
-void helpAction(void);
 
 #endif /* API_INC_API_CMDPARSER_H_ */

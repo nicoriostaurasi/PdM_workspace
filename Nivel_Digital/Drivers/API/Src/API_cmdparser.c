@@ -8,17 +8,7 @@
 #include "API_cmdparser.h"
 #include "API_uart.h"
 #include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <ctype.h>
-#include "stm32f4xx_hal.h"
-#include "API_digital_angle_meter.h"
-
-#define LD2_Pin GPIO_PIN_5
-#define LD2_GPIO_Port GPIOA
-
-/** @brief Tipo de función para manejar comandos */
-typedef void (*command_handler_t)(uint8_t argc, char *argv[]);
 
 /** @brief Tipos de estado para la máquina de estados del parser de comandos */
 typedef enum {
@@ -26,7 +16,6 @@ typedef enum {
 	CMD_RECEIVING,
 	CMD_PROCESS,
 	CMD_ERROR,
-	CMD_WAIT_FOR_EXCECUTION,
 } cmdParserState_t;
 
 
@@ -43,51 +32,45 @@ typedef struct{
     simpleArgumentDetail_t *argumentDetail;
 } commandWithSimpleArguments_t;
 
-static cmd_id_t currentCmdId;
-
 /** @brief Buffer para recibir datos por UART */
 static uint8_t uartRxBuffer[CMD_MAX_LINE];
-
-static uint8_t digitalAngleMeterFsmBuffer[CMD_MAX_LINE];
 
 /** @brief Máquina de estados del parser de comandos */
 static cmdParserState_t cmdParserStateFsm = CMD_IDLE;
 
-/** @brief Variables para almacenar los argumentos actuales y el handler del comando a ejecutar */
-static char* currentArgv[CMD_MAX_TOKENS];
+/** @brief FIFO circular de comandos pendientes de ejecución */
+static cmd_id_t cmdFifo[CMD_FIFO_SIZE];
+static uint8_t cmdFifoHead = 0;
+static uint8_t cmdFifoTail = 0;
 
-/** @brief Variable para almacenar el número de argumentos actuales */
-static uint8_t currentArgc = 0;
-
-/** @brief Variable para almacenar el handler del comando a ejecutar */
-static command_handler_t currentCmdHandler;
-
-static bool_t digitalAngleMeterCmd = false;
-
-static cmd_event_t pendingCmd;
-
-
-bool_t cmdGetPendingCommand(cmd_id_t *cmd)
+/**
+ * @brief Empuja un comando en la FIFO.
+ * @return true si entró, false si la FIFO estaba llena.
+ */
+static bool_t cmdFifoPush(cmd_id_t id)
 {
-    if (!pendingCmd.pending) {
-        return false;
+    uint8_t nextHead = (cmdFifoHead + 1U) % CMD_FIFO_SIZE;
+    if (nextHead == cmdFifoTail) {
+        return false; // llena, descartamos el comando más reciente
     }
-
-    *cmd = pendingCmd.id;
-    pendingCmd.pending = false;
-    cmdParserStateFsm = CMD_IDLE;
+    cmdFifo[cmdFifoHead] = id;
+    cmdFifoHead = nextHead;
     return true;
 }
 
-/** @brief Acción para el comando HELP */
-void helpAction(void) {
-	cmdPrintHelp();
+bool_t cmdGetPendingCommand(cmd_id_t *cmd)
+{
+    if (cmd == NULL) {
+        return false;
+    }
+    if (cmdFifoHead == cmdFifoTail) {
+        return false; // vacía
+    }
+
+    *cmd = cmdFifo[cmdFifoTail];
+    cmdFifoTail = (cmdFifoTail + 1U) % CMD_FIFO_SIZE;
+    return true;
 }
-
-
-
-/**** Accion para el comando STATUS ****/
-
 
 /** @brief Función para tokenizar la línea de comando recibida
  *  @param input: La línea de comando a tokenizar
@@ -159,11 +142,18 @@ simpleArgumentDetail_t modePayload[]={
 		{"ANALOG", CMD_MODE_ANALOG, "Set the display mode to analog"},
 };
 
+simpleArgumentDetail_t loopbackPayload[]={
+		{NULL, CMD_LOOPBACK_GET, "Get the current UART loopback state"},
+		{"ON", CMD_LOOPBACK_ON, "Enable UART RX->TX loopback (echo)"},
+		{"OFF", CMD_LOOPBACK_OFF, "Disable UART RX->TX loopback (echo)"},
+};
+
 const commandWithSimpleArguments_t availableCommands[] = {
 	{"HELP",1, helpPayload},
 	{"READ",2, readPayload},
 	{"STATUS",1, statusPayload},
 	{"MODE",4, modePayload},
+	{"LOOPBACK",3, loopbackPayload},
 };
 
 /** @brief Función para procesar la línea de comando recibida y ejecutar la acción correspondiente
@@ -172,7 +162,7 @@ const commandWithSimpleArguments_t availableCommands[] = {
 static cmd_status_t cmdProcessLine(void)
 {
 	char* argv[CMD_MAX_TOKENS];
-	char *expectedArg;
+	const char *expectedArg;
 	int8_t argc = tokenize((char*)uartRxBuffer, argv);
 
 	// Valido que los comandos sean los aceptados, si hay mas doy un overflow
@@ -193,15 +183,17 @@ static cmd_status_t cmdProcessLine(void)
 	            expectedArg = availableCommands[i].argumentDetail[j].argument;
 				if(expectedArg == NULL){
 					if(argc==1){
-						pendingCmd.id = availableCommands[i].argumentDetail[j].id;
-						pendingCmd.pending = true;
+						if(!cmdFifoPush(availableCommands[i].argumentDetail[j].id)){
+							return CMD_ERR_OVERFLOW;
+						}
 						return CMD_OK;
 					}
 				}
 				if (argc == 2 && strcmp(argv[1], expectedArg) == 0) {
-					pendingCmd.id = availableCommands[i].argumentDetail[j].id;
-				    pendingCmd.pending = true;
-				    return CMD_OK;
+					if(!cmdFifoPush(availableCommands[i].argumentDetail[j].id)){
+						return CMD_ERR_OVERFLOW;
+					}
+					return CMD_OK;
 				}
 			}
 			return CMD_ERR_ARG;
@@ -211,24 +203,18 @@ static cmd_status_t cmdProcessLine(void)
 }
 
 /**
- * @brief Ejecuta la accion correspondiente
- */
-static void cmdExecutAction(void){
-	currentCmdHandler(currentArgc, currentArgv);
-}
-
-/**
  * @brief Inicializa el módulo parser de comandos
  */
 void cmdParserInit(void){
 	cmdParserStateFsm = CMD_IDLE;
-	currentArgc = 0;
-	memset(uartRxBuffer,0,CMD_MAX_LINE);
+	cmdFifoHead = 0;
+	cmdFifoTail = 0;
+	memset(uartRxBuffer, 0, CMD_MAX_LINE);
 }
 
 /**
- * @brief Máquina de estados del Paser. Debe ser llamada periódicamente desde el bucle
- * 		  Procesa hasta 16 bytes por invocación (no bloqueante).
+ * @brief FSM del parser. Debe llamarse periódicamente desde el bucle principal.
+ *        Procesa un byte por invocación (no bloqueante).
  */
 void cmdPoll(void){
 	static uint8_t currentDataIndex = 0;
@@ -268,10 +254,6 @@ void cmdPoll(void){
 				cmdProcessStatus = CMD_ERR_OVERFLOW;
 				cmdParserStateFsm = CMD_ERROR;
 			}
-			break;
-		}
-
-		case CMD_WAIT_FOR_EXCECUTION: {
 			break;
 		}
 

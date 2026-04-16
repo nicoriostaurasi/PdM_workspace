@@ -23,4 +23,9 @@ bool adxl345_init(void);
 bool adxl345_readDeviceId(uint8_t *devid);
 bool adxl345_readRawAcceleration(ADXL345_Raw_t *raw);
 
+/** @brief Chequeo de salud no invasivo: lee el DEVID y lo compara con el valor esperado
+ *  @return true si responde al bus I2C y el DEVID es correcto, false en cualquier otro caso
+ */
+bool adxl345_isAlive(void);
+
 #endif /* API_INC_API_ADXL345_H_ */

@@ -85,9 +85,6 @@ static float clampf(float value, float min, float max) {
 }
 
 static void screen_drawAnalogInclinometer(angles_t angle) {
-    char rollStr[8];
-    char pitchStr[8];
-
     /* Parámetros del visor circular */
     const int16_t cx = 64;
     const int16_t cy = 37;

@@ -80,6 +80,14 @@ bool adxl345_readDeviceId(uint8_t *devid){
     return adxl345_readReg(ADXL345_REG_DEVID, devid);
 }
 
+bool adxl345_isAlive(void){
+    uint8_t devId = 0;
+    if (!adxl345_readDeviceId(&devId)){
+        return false;
+    }
+    return (devId == ADXL345_DEVID_VALUE);
+}
+
 bool adxl345_readRawAcceleration(ADXL345_Raw_t *raw)
 {
 	bool ret;

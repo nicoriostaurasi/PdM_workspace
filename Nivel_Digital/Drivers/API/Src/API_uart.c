@@ -43,8 +43,8 @@ static bool_t isModuleInit = false;
 /** Variable para saber si hubo nuevos datos en RX */
 static bool_t isNewData = false;
 
-/** Variable para habilitar el loopback entre RX y TX*/
-static bool_t loopbackEnable = true;
+/** Variable para habilitar el loopback (eco) entre RX y TX */
+static volatile bool_t loopbackEnable = true;
 
 /** Variable para almacenar los caracteres recibidos*/
 static uint8_t charRx;
@@ -262,14 +262,14 @@ bool_t uartInit(){
 }
 
 static bool_t uartPushTxBuffer(uint8_t * pstring, uint16_t size){
-	bool_t ret = false;
 	for(uint16_t i=0;i<size;i++){
-		ret = uartTxPush(pstring[i]);
-		uartStartTxIT();
-		if(!ret){
+		if(!uartTxPush(pstring[i])){
+			// aseguramos que lo que sí entró al FIFO arranque a transmitirse
+			uartStartTxIT();
 			return false;
 		}
 	}
+	uartStartTxIT();
 	return true;
 }
 
@@ -291,11 +291,11 @@ void uartSendString(uint8_t * pstring){
 		return;
 	}
 
-	// Contar la longitud del string hasta el carácter nulo
-	for(stringCharCounter=0;stringCharCounter<=UART_MAX_STRING_LENGTH;stringCharCounter++) {
+	// Contar la longitud del string hasta el carácter nulo (sin desbordar el buffer)
+	for(stringCharCounter=0;stringCharCounter<UART_MAX_STRING_LENGTH;stringCharCounter++) {
 		if(pstring[stringCharCounter]== '\0') {
 			stringLengthToSend = stringCharCounter;
-			if(stringLengthToSend<=UART_MIN_STRING_LENGTH) {
+			if(stringLengthToSend<UART_MIN_STRING_LENGTH) {
 				return;
 			}
 			// Intentar enviar el string por UART, reintentando hasta el número máximo de intentos
@@ -307,6 +307,16 @@ void uartSendString(uint8_t * pstring){
 			return;
 		}
 	}
+}
+
+/** @brief Habilita o deshabilita el eco (loopback) de RX hacia TX */
+void uartSetLoopback(bool_t enable){
+	loopbackEnable = enable;
+}
+
+/** @brief Consulta si el eco (loopback) está habilitado */
+bool_t uartGetLoopback(void){
+	return loopbackEnable;
 }
 
 /** @brief Función para enviar una cadena de caracteres por UART con un tamaño específico

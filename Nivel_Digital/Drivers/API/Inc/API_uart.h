@@ -63,5 +63,9 @@ bool_t changeCurrentBaudrate(uint32_t newBaudrate);
 
 bool_t uartRxPop(uint8_t *data);
 
+void uartSetLoopback(bool_t enable);
+
+bool_t uartGetLoopback(void);
+
 
 #endif /* API_INC_API_UART_H_ */

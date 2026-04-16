@@ -27,4 +27,9 @@ bool ssd1306_init(void);
 void ssd1306_fill(uint8_t value);
 bool ssd1306_updateScreen(display_t *disp);
 
+/** @brief Chequeo de salud no invasivo: ping I2C al display sin reconfigurarlo
+ *  @return true si el display responde en el bus, false en caso contrario
+ */
+bool ssd1306_isAlive(void);
+
 #endif /* API_INC_API_SSD1306_H_ */
