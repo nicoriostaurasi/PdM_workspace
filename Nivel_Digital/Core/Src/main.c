@@ -19,8 +19,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "APP_digitalAngleMeter.h"
-#include "API_debounce.h"
-#include "API_cmdParser.h"
+#include "SRV_debounce.h"
+#include "SRV_cmdParser.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */

@@ -1,15 +1,15 @@
 /**
- * @file    API_angle.h
+ * @file    SRV_angle.h
  * @brief   Conversión de aceleración a ángulos pitch/roll.
  *
  * @date    13 abr 2026
  * @author  Ing. Nicolás Gabriel Rios Taurasi
  */
 
-#ifndef API_INC_API_ANGLE_H_
-#define API_INC_API_ANGLE_H_
+#ifndef SRV_INC_SRV_ANGLE_H_
+#define SRV_INC_SRV_ANGLE_H_
 
-#include "API_accelerometer.h"
+#include "SRV_accelerometer.h"
 
 /**
  * @brief   Ángulos pitch y roll expresados en grados.
@@ -27,9 +27,9 @@ typedef struct
  *          devuelve el promedio, para atenuar ruido de alta frecuencia.
  *
  * @param   pAccel  Puntero a la aceleración de entrada (en g).
- * @return  Estructura con pitch y roll en grados. Si pAccel es NULL devuelve
+ * @return  Estructura con pitch y roll en grados. Si @p pAccel es NULL devuelve
  *          ángulos en cero.
  */
 angles_t angle_fromAcceleration(adxl345_accelG_t* pAccel);
 
-#endif /* API_INC_API_ANGLE_H_ */
+#endif /* SRV_INC_SRV_ANGLE_H_ */
