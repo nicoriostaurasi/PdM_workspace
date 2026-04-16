@@ -1,8 +1,8 @@
-/*
- * API_debounce.c
+/** @file   API_debounce.c
+ *  @brief  Implementación de la FSM de debounce por software para el botón de usuario.
  *
- *  Created on: 29 mar 2026
- *      Author: nicol
+ *  @date   29 mar 2026
+ *  @author Nicolás Rios Taurasi
  */
 
 #include <string.h>
@@ -14,26 +14,29 @@
 
 /** @brief Estados de la máquina de estados del debounce */
 typedef enum{
-BUTTON_UP,
-BUTTON_FALLING,
-BUTTON_DOWN,
-BUTTON_RAISING,
+	BUTTON_UP,      /**< Botón liberado (estado estable) */
+	BUTTON_FALLING, /**< Transición detectada hacia presionado, pendiente de confirmar */
+	BUTTON_DOWN,    /**< Botón presionado (estado estable) */
+	BUTTON_RAISING, /**< Transición detectada hacia liberado, pendiente de confirmar */
 } debounceState_t;
 
 
-/** @brief Debouncer FSM estado*/
+/** @brief Estado actual de la FSM de debounce */
 static debounceState_t _debounceFsmState = BUTTON_UP;
-/** @brief Delay para el debounce */
+/** @brief Delay para el muestreo periódico del debounce */
 static delay_t debounceDelay;
-/** @brief Bandera para indicar si la tecla fue presionada */
-static bool_t _keyPressedFlag = false; 
+/** @brief Bandera interna que indica si se detectó una pulsación válida */
+static bool_t _keyPressedFlag = false;
 
-/** @brief Función que verifica el estado del botón sin debounce
-  * @retval true si el botón está presionado, false si no lo está
-  */
+/** @brief  Verifica el estado eléctrico del botón sin filtrado de debounce.
+ *  @return true si el botón está físicamente presionado, false si está liberado.
+ */
 static bool checkButtonStatusPressedRaw(void);
 
-/** @brief Inicializa la máquina de estados del debounce */
+/** @brief Inicializa la máquina de estados del debounce y su timer interno.
+ *
+ *  Pone la FSM en BUTTON_UP y configura el delay de muestreo.
+ */
 void debounce_fsmInit(){
   // Inicializo el delay para el debounce y la máquina de estados del debounce
   memset(&debounceDelay, 0 ,sizeof(debounceDelay));
@@ -41,7 +44,12 @@ void debounce_fsmInit(){
   _debounceFsmState = BUTTON_UP;
 }
 
-/** @brief Actualiza la máquina de estados del debounce */
+/** @brief Avanza la máquina de estados del debounce.
+ *
+ *  Debe llamarse periódicamente desde el bucle principal. Utiliza contadores
+ *  internos para confirmar las transiciones (falling/raising) antes de
+ *  cambiar de estado estable.
+ */
 void debounce_fsmUpdate(){
 
   static uint8_t fallingStateCounter = 0;
@@ -123,9 +131,12 @@ void debounce_fsmUpdate(){
 	}
 }
 
-/** @brief Lee si la tecla fue presionado, si devuelve true resetea el valor
-  * @retval true si el botón fue presionado, false si no lo fue
-  */
+/** @brief  Consulta si se detectó una pulsación desde la última llamada.
+ *
+ *  Si devuelve true, la bandera interna se resetea automáticamente (one-shot).
+ *
+ *  @return true si hubo una pulsación pendiente, false en caso contrario.
+ */
 bool_t debounce_readKey(void){
 	// Si la bandera de tecla presionada esta seteada, se resetea y se devuelve true
 	if(_keyPressedFlag){
@@ -136,7 +147,9 @@ bool_t debounce_readKey(void){
 }
 
 
-/** @brief Función que verifica el estado del botón sin debounce */
+/** @brief  Verifica el estado eléctrico del botón sin filtrado de debounce.
+ *  @return true si el botón está físicamente presionado, false si está liberado.
+ */
 static bool checkButtonStatusPressedRaw(){
 	return (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) != GPIO_PIN_SET);
 }

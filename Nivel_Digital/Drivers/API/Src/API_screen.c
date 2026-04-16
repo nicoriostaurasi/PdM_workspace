@@ -1,8 +1,11 @@
-/*
- * API_screen.c
+/** @file   API_screen.c
+ *  @brief  Vistas de alto nivel del inclinómetro sobre el display OLED SSD1306.
  *
- *  Created on: 13 abr 2026
- *      Author: nicol
+ *  Contiene las funciones de renderizado para las vistas digital (pitch/roll
+ *  como texto) y analógica (visor circular con burbuja).
+ *
+ *  @date   13 abr 2026
+ *  @author Nicolás Rios Taurasi
  */
 #include <stdint.h>
 
@@ -10,17 +13,28 @@
 #include "API_ssd1306.h"
 #include "API_graphic.h"
 
+/** @brief  Inicializa el subsistema de pantalla (capa gráfica + driver SSD1306).
+ *  @return true si la inicialización fue exitosa, false en caso contrario.
+ */
 bool screen_start(){
 	graphic_init();
 	return ssd1306_init();
 }
 
+/** @brief  Dibuja el recuadro doble decorativo que enmarca toda la pantalla. */
 static void buildBox(){
 	graphic_drawRect(2, 0, 126, 64, COLOR_ON);
 	graphic_drawRect(2+1, 0+1, 126-2, 64-2, COLOR_ON);
 
 }
 
+/** @brief  Dibuja un recuadro con título y valor de ángulo para la vista digital.
+ *
+ *  @param  x       Coordenada X de la esquina superior izquierda del recuadro.
+ *  @param  y       Coordenada Y de la esquina superior izquierda del recuadro.
+ *  @param  tittle  Cadena con el nombre del eje (ej. "PITCH" o "ROLL").
+ *  @param  angle   Cadena con el valor del ángulo ya formateado.
+ */
 static void buildAngleBox(uint16_t x, uint16_t y, char* tittle, char* angle){
 	graphic_drawRect(x, y, 126/2-1, 64-2, COLOR_ON);
 	graphic_drawHLine(x, y+1, 126/2-1, COLOR_ON);
@@ -31,6 +45,10 @@ static void buildAngleBox(uint16_t x, uint16_t y, char* tittle, char* angle){
 
 }
 
+/** @brief  Dibuja el título centrado en la parte superior de la pantalla.
+ *
+ *  @param  tittle  Cadena con el texto del título. Si es NULL no dibuja nada.
+ */
 static void buildTittle(char* tittle){
 	if(tittle==NULL){
 		return;
@@ -39,6 +57,13 @@ static void buildTittle(char* tittle){
     graphic_puts(tittle, &Font_7x10, COLOR_ON);
 }
 
+/** @brief  Convierte un valor flotante a cadena con un decimal de precisión.
+ *
+ *  Formato resultante: signo + dígitos enteros + '.' + 1 dígito decimal + '\0'.
+ *
+ *  @param  value  Valor flotante a convertir.
+ *  @param  buf    Buffer de destino (debe tener al menos 8 bytes).
+ */
 static void floatToString(float value, char *buf){
     int16_t entero;
     uint16_t decimal;
@@ -74,17 +99,36 @@ static void floatToString(float value, char *buf){
     buf[idx++] = 0;
 }
 
+/** @brief  Redondea un flotante al entero más cercano.
+ *
+ *  @param  x  Valor flotante a redondear.
+ *  @return Entero de 16 bits con el valor redondeado.
+ */
 static int16_t round_to_int(float x) {
     if (x >= 0.0f) return (int16_t)(x + 0.5f);
     return (int16_t)(x - 0.5f);
 }
 
+/** @brief  Limita un valor flotante a un rango [min, max].
+ *
+ *  @param  value  Valor a limitar.
+ *  @param  min    Límite inferior del rango.
+ *  @param  max    Límite superior del rango.
+ *  @return Valor acotado dentro del rango especificado.
+ */
 static float clampf(float value, float min, float max) {
     if (value < min) return min;
     if (value > max) return max;
     return value;
 }
 
+/** @brief  Dibuja la vista analógica del inclinómetro (visor circular con burbuja).
+ *
+ *  Representa los ángulos pitch y roll como el desplazamiento de una burbuja
+ *  dentro de un visor circular, con un rango visual de +/-45 grados.
+ *
+ *  @param  angle  Estructura con los ángulos pitch y roll a representar.
+ */
 static void screen_drawAnalogInclinometer(angles_t angle) {
     /* Parámetros del visor circular */
     const int16_t cx = 64;
@@ -135,6 +179,11 @@ static void screen_drawAnalogInclinometer(angles_t angle) {
 }
 
 
+/** @brief  Renderiza la vista digital mostrando pitch y roll como texto en dos recuadros.
+ *
+ *  @param  pitch  Ángulo de pitch en grados.
+ *  @param  roll   Ángulo de roll en grados.
+ */
 static void screen_displayPitchRollDigital(float pitch, float roll)
 {
      char spitch[12];
@@ -151,15 +200,24 @@ static void screen_displayPitchRollDigital(float pitch, float roll)
 
 }
 
+/** @brief  Renderiza la vista analógica y envía el frame al display.
+ *
+ *  @param  angle  Estructura con los ángulos pitch y roll a representar.
+ *  @return true si el frame se envió correctamente al display, false en caso contrario.
+ */
 bool screen_updateAnalog(angles_t angle){
 	graphic_fill(COLOR_OFF);
 	screen_drawAnalogInclinometer(angle);
 	return graphic_update();
 }
 
+/** @brief  Renderiza la vista digital y envía el frame al display.
+ *
+ *  @param  angle  Estructura con los ángulos pitch y roll a representar.
+ *  @return true si el frame se envió correctamente al display, false en caso contrario.
+ */
 bool screen_updateDigital(angles_t angle){
     graphic_fill(COLOR_OFF);
  	screen_displayPitchRollDigital(angle.pitch,angle.roll);
  	return graphic_update();
  }
-

@@ -1,8 +1,14 @@
-/*
- * API_digital_angle_meter.c
+/** @file API_digitalAngleMeter.c
+ *  @brief Máquina de estados principal del inclinómetro digital.
  *
- *  Created on: 11 abr 2026
- *      Author: nicol
+ *  Implementa la FSM que coordina la lectura del acelerómetro ADXL345,
+ *  el cálculo de ángulos (pitch/roll), la actualización de la pantalla
+ *  OLED SSD1306, la atención de comandos UART y la pulsación de botón.
+ *  Gestiona los modos de visualización (digital / analógico) y el
+ *  monitoreo de integridad del sistema.
+ *
+ *  @date 11 abr 2026
+ *  @author Nicolás Rios Taurasi
  */
 
 #include <stdbool.h>
@@ -22,49 +28,85 @@
 #include "API_graphic.h"
 #include "API_cmdParser.h"
 
+/** @brief Período del tick de la FSM principal (en ms) */
 #define FSM_TICK_DELAY 1
+
+/** @brief Período del parpadeo del LED heartbeat en funcionamiento normal (en ms) */
 #define HEARTBEAT_RATE 20
+
+/** @brief Período del parpadeo del LED heartbeat en estado de error (en ms) */
 #define HEARTBEAT_RATE_FAIL 100
+
+/** @brief Período de muestreo del sensor acelerómetro (en ms) */
 #define SENSOR_SAMPLE_RATE 10
+
+/** @brief Cantidad máxima de reintentos de lectura del sensor antes de ir a error */
 #define SENSOR_READ_MAX_RETRIES 3
 
+/** @brief Último comando UART recibido pendiente de ejecución */
 static cmd_id_t currentCmd;
 
+/** @brief Estados de la máquina de estados principal del inclinómetro */
 typedef enum {
-	FSM_INIT = 0,
-	FSM_IDLE,
-	FSM_HANDLE_UART,
-	FSM_HANDLE_BUTTON,
-	FSM_READ_SENSOR,
-	FSM_PROCESS_DATA,
-	FSM_UPDATE_DISPLAY,
-	FSM_ERROR_STATE,
+	FSM_INIT = 0,         /**< Inicialización de todos los módulos periféricos */
+	FSM_IDLE,             /**< Espera de eventos (comando UART, botón o timer del sensor) */
+	FSM_HANDLE_UART,      /**< Procesamiento del comando UART recibido */
+	FSM_HANDLE_BUTTON,    /**< Procesamiento de la pulsación de botón */
+	FSM_READ_SENSOR,      /**< Lectura de aceleración desde el ADXL345 */
+	FSM_PROCESS_DATA,     /**< Cálculo de ángulos a partir de la aceleración */
+	FSM_UPDATE_DISPLAY,   /**< Actualización de la pantalla OLED */
+	FSM_ERROR_STATE,      /**< Estado de error con verificación de integridad */
 } digitalAngleMeterState_t;
 
+/** @brief Modos de visualización de la pantalla OLED */
 typedef enum {
-	DISPLAY_DIGITAL = 0,
-	DISPLAY_ANALOGIC,
+	DISPLAY_DIGITAL = 0,  /**< Visualización numérica de los ángulos */
+	DISPLAY_ANALOGIC,     /**< Visualización gráfica (analógica) de los ángulos */
 } displayMode_t;
 
 
+/** @brief Estado actual de la FSM principal */
 static digitalAngleMeterState_t digitalAngleMeterFsmState = FSM_INIT;
+
+/** @brief Modo de visualización actual de la pantalla */
 static displayMode_t displayMode = DISPLAY_ANALOGIC;
+
+/** @brief Timer por software para el tick de la FSM */
 static delay_t fsmDelay;
+
+/** @brief Timer por software para el parpadeo del LED heartbeat */
 static delay_t heartBeatLedTimer;
+
+/** @brief Timer por software para el muestreo del sensor */
 static delay_t sampleRateTimer;
 
+/**
+ * @brief Imprime el ángulo actual (pitch y roll) por UART.
+ *
+ * @param currentAngle Estructura con los ángulos pitch y roll en grados
+ */
 static void printCurrentAngle(angles_t currentAngle){
 	static uint8_t currentAngleBuffer[128];
 	sprintf((char*)currentAngleBuffer,"\nthe current angle is:\r\nPITCH: %.2f°	ROLL: %.2f°\r\n",currentAngle.pitch,currentAngle.roll);
 	uart_sendString(currentAngleBuffer);
 }
 
+/**
+ * @brief Imprime la aceleración actual (X, Y, Z) por UART.
+ *
+ * @param currentAccel Estructura con las componentes de aceleración en g
+ */
 static void printCurrentAcceleration(adxl345_accelG_t currentAccel){
 	static uint8_t currentAccelerationBuffer[128];
 	sprintf((char*)currentAccelerationBuffer,"\nthe current acceleration is:\r\nX: %.2f Y: %.2f Z: %.2f\r\n",currentAccel.x,currentAccel.y,currentAccel.z);
 	uart_sendString(currentAccelerationBuffer);
 }
 
+/**
+ * @brief Alterna el modo de visualización entre digital y analógico.
+ *
+ * Envía un mensaje informativo por UART e invierte el modo actual.
+ */
 static void toggleDisplayMode(void){
  	uart_sendString((uint8_t*)"\ntoggle mode\r\n");
 	if(displayMode == DISPLAY_DIGITAL) {
@@ -75,6 +117,9 @@ static void toggleDisplayMode(void){
 }
 
 
+/**
+ * @brief Informa por UART el modo de visualización actual (DIGITAL o ANALOGIC).
+ */
 static void getDisplayMode(void){
 	if(displayMode == DISPLAY_DIGITAL) {
 		uart_sendString((uint8_t*)"\nthe current mode is DIGITAL\r\n");
@@ -83,16 +128,25 @@ static void getDisplayMode(void){
 	}
 }
 
+/**
+ * @brief Fuerza el modo de visualización a DIGITAL e informa por UART.
+ */
 static void setDisplayModeToDigital(void){
 	displayMode = DISPLAY_DIGITAL;
  	uart_sendString((uint8_t*)"\nset to digital\r\n");
 }
 
+/**
+ * @brief Fuerza el modo de visualización a ANALOGIC e informa por UART.
+ */
 static void setDisplayModeToAnalogic(void){
 	displayMode = DISPLAY_ANALOGIC;
  	uart_sendString((uint8_t*)"\nset to analog\r\n");
 }
 
+/**
+ * @brief Consulta e informa por UART el estado del loopback de la UART.
+ */
 static void getLoopbackState(void){
 	if(uart_getLoopback()){
 		uart_sendString((uint8_t*)"\nUART loopback is ON\r\n");
@@ -101,16 +155,28 @@ static void getLoopbackState(void){
 	}
 }
 
+/**
+ * @brief Habilita el loopback de la UART e informa por UART.
+ */
 static void enableLoopback(void){
 	uart_setLoopback(true);
 	uart_sendString((uint8_t*)"\nUART loopback enabled\r\n");
 }
 
+/**
+ * @brief Deshabilita el loopback de la UART e informa por UART.
+ */
 static void disableLoopback(void){
 	uart_setLoopback(false);
 	uart_sendString((uint8_t*)"\nUART loopback disabled\r\n");
 }
 
+/**
+ * @brief Imprime por UART el estado completo del sistema.
+ *
+ * Reporta el estado de la UART (baudrate, loopback), del ADXL345 y del
+ * SSD1306, y una evaluación global (HEALTHY o DEGRADED).
+ */
 static void printSystemStatus(void){
 	static uint8_t statusBuffer[96];
 	bool allOk = true;
@@ -148,27 +214,51 @@ static void printSystemStatus(void){
 }
 
 
-//llama al modulo de timer por sw y checkea el timer del sensor
+/**
+ * @brief Verifica si venció el timer de muestreo del sensor.
+ *
+ * @return true si el timer expiró y es momento de leer el sensor, false en caso contrario
+ */
 static bool checkSensorSamplingTimer(){
 	return delay_read(&sampleRateTimer);
 }
 
-//llama al modulo de gpios y pregunta si la tecla fue pulsada
+/**
+ * @brief Verifica si se detectó una pulsación del botón de usuario.
+ *
+ * @return true si el botón fue presionado (con antirrebote), false en caso contrario
+ */
 static bool checkButtonPressed(){
 	return debounce_readKey();
 }
 
-// llama al mudulo del sensor y le pide los datos raw
+/**
+ * @brief Obtiene la aceleración actual desde el sensor ADXL345.
+ *
+ * @param pAccel Puntero a la estructura donde se almacenan las componentes de aceleración
+ * @return true si la lectura fue exitosa, false si hubo un error de comunicación
+ */
 static bool getCurrentAccelerationFromSensor(adxl345_accelG_t* pAccel){
 	return accelerometer_readAccelerationG(pAccel);
 }
 
+/**
+ * @brief Verifica el timer del LED heartbeat y alterna el LED si expiró.
+ */
 static void checkHeartBeatTimer(void) {
 	if(delay_read(&heartBeatLedTimer)){
 		gpios_toggleLed();
 	}
 }
 
+/**
+ * @brief Inicializa todos los módulos periféricos necesarios para la FSM.
+ *
+ * Configura I2C, UART, GPIOs, timers por software, acelerómetro, pantalla
+ * OLED y muestra la pantalla de bienvenida.
+ *
+ * @return true si todos los módulos se inicializaron correctamente, false ante cualquier fallo
+ */
 static bool digital_angle_meter_init() {
 	// inicializa los modulos perifericos necesarios para que funcione la FSM
 	if(!i2c_init1()){
@@ -207,6 +297,13 @@ static bool digital_angle_meter_init() {
 	return true;
 }
 
+/**
+ * @brief Verifica la integridad de los periféricos críticos del sistema.
+ *
+ * Intenta reinicializar I2C, acelerómetro y pantalla OLED. Si todos
+ * responden correctamente, retorna la FSM al estado FSM_INIT para
+ * recuperar el funcionamiento normal.
+ */
 static void checkSystemIntegrity(void){
 	bool allOk = true;
 
@@ -234,10 +331,23 @@ static void checkSystemIntegrity(void){
 }
 
 
+/**
+ * @brief Inicializa la FSM del inclinómetro digital al estado FSM_INIT.
+ *
+ * Debe llamarse una vez antes de comenzar a invocar digitalAngleMeter_fsmUpdate.
+ */
 void digitalAngleMeter_fsmInit() {
 	digitalAngleMeterFsmState = FSM_INIT;
 }
 
+/**
+ * @brief Actualiza la FSM principal del inclinómetro digital.
+ *
+ * Debe llamarse periódicamente desde el bucle principal (super-loop).
+ * Gestiona las transiciones entre los estados de inicialización, espera,
+ * atención de comandos UART, pulsación de botón, lectura del sensor,
+ * procesamiento de datos, actualización de pantalla y manejo de errores.
+ */
 void digitalAngleMeter_fsmUpdate() {
 	static angles_t currentAngle;
 	static adxl345_accelG_t currentAccel;

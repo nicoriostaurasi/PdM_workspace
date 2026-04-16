@@ -1,23 +1,27 @@
-/*
- * API_gpios.c
- *
- *  Created on: 12 abr 2026
- *      Author: nicol
+/**
+ * @file API_gpios.c
+ * @brief Configuracion e inicializacion de GPIOs (pulsador B1 y LED LD2).
+ * @date 12 abr 2026
+ * @author Nicolas Rios Taurasi
  */
 
 #include "API_gpios.h"
 #include "stm32f4xx_hal.h"
 
-
+/**
+ * @brief Conmuta el estado del LED LD2.
+ */
 void gpios_toggleLed(void){
 	HAL_GPIO_TogglePin(LD2_GPIO_Port,LD2_Pin);
 }
 
 /**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief Inicializa los GPIOs del sistema.
+ *
+ * Habilita los relojes de los puertos A, B, C y H. Configura el pin B1
+ * como entrada con interrupcion por flanco descendente (IT_FALLING) y
+ * el pin LD2 como salida push-pull sin pull-up/pull-down.
+ */
 void gpios_init(void){
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
@@ -44,4 +48,3 @@ void gpios_init(void){
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
 }
-

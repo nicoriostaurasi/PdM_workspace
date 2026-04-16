@@ -1,8 +1,9 @@
-/*
- * API_delay.h
+/**
+ * @file    API_delay.h
+ * @brief   Temporizadores por software no bloqueantes basados en HAL_GetTick().
  *
- *  Created on: 19 mar 2026
- *      Author: Ing. Nicolas Gabriel Rios Taurasi
+ * @date    19 mar 2026
+ * @author  Ing. Nicolas Gabriel Rios Taurasi
  */
 
 #ifndef API_INC_API_DELAY_H_
@@ -11,46 +12,50 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef uint32_t tick_t;
-typedef bool bool_t;
+typedef uint32_t tick_t;        /**< Tipo entero que representa un tick del sistema (ms) */
+typedef bool bool_t;            /**< Alias de bool para homogeneidad del proyecto */
 
 /**
- * @brief Delay structure
+ * @brief   Estado interno de un temporizador por software.
  */
 typedef struct{
-   tick_t startTime;
-   tick_t duration;
-   bool_t running;
+   tick_t startTime;            /**< Tick capturado al arrancar el delay */
+   tick_t duration;             /**< Duración configurada, en ticks */
+   bool_t running;              /**< Bandera de delay en curso */
 } delay_t;
 
 /**
-  * @brief  Initializes a delay structure
-  * @param  delay: Pointer to the delay structure
-  * @param  duration: Duration of the delay
-  * @retval None
-  */
+ * @brief   Inicializa un temporizador con la duración indicada.
+ *
+ * @param   delay       Puntero a la estructura de delay a inicializar.
+ * @param   duration    Duración del delay, en ticks (ms).
+ */
 void delay_init( delay_t * delay, tick_t duration );
 
 /**
-  * @brief  Reads the status of a delay
-  * @param  delay: Pointer to the delay structure
-  * @retval bool_t: true if the delay has completed, false otherwise
-  */
+ * @brief   Consulta si el temporizador cumplió su tiempo. Si no estaba corriendo
+ *          lo arranca; si ya venció, lo detiene y devuelve true una sola vez.
+ *
+ * @param   delay   Puntero al delay.
+ * @return  true si el delay venció en esta lectura, false si aún no o si el
+ *          puntero es NULL.
+ */
 bool_t delay_read( delay_t * delay );
 
 /**
-  * @brief  Writes a new duration to an existing delay
-  * @param  delay: Pointer to the delay structure
-  * @param  duration: New duration for the delay
-  * @retval None
-  */
+ * @brief   Reescribe la duración de un delay existente sin afectar su estado.
+ *
+ * @param   delay       Puntero al delay.
+ * @param   duration    Nueva duración, en ticks (ms).
+ */
 void delay_write( delay_t * delay, tick_t duration );
 
 /**
-  * @brief  Check if the delay is active
-  * @param  delay: Pointer to the delay structure
-  * @retval bool_t: true if the delay is running, false otherwise
-  */
+ * @brief   Consulta si el temporizador está corriendo.
+ *
+ * @param   delay   Puntero al delay.
+ * @return  true si está corriendo, false en caso contrario o si el puntero es NULL.
+ */
 bool_t delay_isRunning( delay_t* delay );
 
 

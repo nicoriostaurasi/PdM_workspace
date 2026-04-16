@@ -1,8 +1,14 @@
-/*
- * API_cmdparser.c
+/** @file API_cmdparser.c
+ *  @brief Parser de comandos por línea recibidos a través de UART.
  *
- *  Created on: 3 abr 2026
- *      Author: nicol
+ *  Implementa una máquina de estados finitos (FSM) que recibe caracteres
+ *  desde el módulo UART, arma líneas de comando, las tokeniza y busca
+ *  coincidencia contra una tabla de comandos registrados. Los comandos
+ *  reconocidos se encolan en una FIFO para ser consumidos por el módulo
+ *  principal (digitalAngleMeter).
+ *
+ *  @date 3 abr 2026
+ *  @author Nicolás Rios Taurasi
  */
 
 #include <string.h>
@@ -11,42 +17,45 @@
 #include "API_cmdParser.h"
 #include "API_uart.h"
 
-/** @brief Tipos de estado para la máquina de estados del parser de comandos */
+/** @brief Estados posibles de la máquina de estados del parser de comandos */
 typedef enum {
-	CMD_IDLE = 0,
-	CMD_RECEIVING,
-	CMD_PROCESS,
-	CMD_ERROR,
+	CMD_IDLE = 0,     /**< Esperando el primer carácter de un nuevo comando */
+	CMD_RECEIVING,    /**< Recibiendo caracteres de la línea de comando */
+	CMD_PROCESS,      /**< Línea completa lista para ser procesada */
+	CMD_ERROR,        /**< Ocurrió un error; se reporta y se vuelve a IDLE */
 } cmdParserState_t;
 
 
-/** @brief Estructura para definir un comando */
+/** @brief Detalle de un argumento simple asociado a un comando */
 typedef struct{
-	const char *argument;
-	cmd_id_t id;
-	const char *description;
+	const char *argument;    /**< Argumento esperado (NULL si el comando no lleva argumento) */
+	cmd_id_t id;             /**< Identificador del comando a encolar en la FIFO */
+	const char *description; /**< Descripción del argumento para la ayuda */
 } simpleArgumentDetail_t;
 
+/** @brief Definición de un comando con sus argumentos simples */
 typedef struct{
-    const char *name;
-    uint8_t availableDifferentArgs;
-    simpleArgumentDetail_t *argumentDetail;
+    const char *name;                       /**< Nombre del comando (en mayúsculas) */
+    uint8_t availableDifferentArgs;         /**< Cantidad de variantes de argumento disponibles */
+    simpleArgumentDetail_t *argumentDetail; /**< Puntero al arreglo de detalles de argumentos */
 } commandWithSimpleArguments_t;
 
-/** @brief Buffer para recibir datos por UART */
+/** @brief Buffer para acumular la línea de comando recibida por UART */
 static uint8_t uartRxBuffer[CMD_MAX_LINE];
 
-/** @brief Máquina de estados del parser de comandos */
+/** @brief Estado actual de la FSM del parser de comandos */
 static cmdParserState_t cmdParserStateFsm = CMD_IDLE;
 
 /** @brief FIFO circular de comandos pendientes de ejecución */
 static cmd_id_t cmdFifo[CMD_FIFO_SIZE];
-static uint8_t cmdFifoHead = 0;
-static uint8_t cmdFifoTail = 0;
+static uint8_t cmdFifoHead = 0; /**< Índice de escritura de la FIFO de comandos */
+static uint8_t cmdFifoTail = 0; /**< Índice de lectura de la FIFO de comandos */
 
 /**
- * @brief Empuja un comando en la FIFO.
- * @return true si entró, false si la FIFO estaba llena.
+ * @brief Inserta un comando en la FIFO de comandos pendientes.
+ *
+ * @param id Identificador del comando a encolar
+ * @return true si el comando se encoló exitosamente, false si la FIFO estaba llena
  */
 static bool_t cmdFifoPush(cmd_id_t id)
 {
@@ -59,6 +68,12 @@ static bool_t cmdFifoPush(cmd_id_t id)
     return true;
 }
 
+/**
+ * @brief Extrae el próximo comando pendiente de la FIFO.
+ *
+ * @param cmd Puntero donde se almacena el identificador del comando extraído
+ * @return true si se extrajo un comando, false si la FIFO estaba vacía o cmd es NULL
+ */
 bool_t cmd_getPendingCommand(cmd_id_t *cmd)
 {
     if (cmd == NULL) {
@@ -73,10 +88,15 @@ bool_t cmd_getPendingCommand(cmd_id_t *cmd)
     return true;
 }
 
-/** @brief Función para tokenizar la línea de comando recibida
- *  @param input: La línea de comando a tokenizar
- *  @param argv: El array donde se almacenarán los tokens
- *  @return: El número de tokens encontrados, o -1 si hubo un error de overflow
+/**
+ * @brief Tokeniza la línea de comando recibida separando por espacios.
+ *
+ * Divide el string de entrada en tokens usando el espacio como delimitador
+ * y los almacena en el arreglo argv.
+ *
+ * @param input Línea de comando a tokenizar (se modifica in-place por strtok)
+ * @param argv Arreglo donde se almacenan los punteros a cada token
+ * @return Cantidad de tokens encontrados, o -1 si se superó CMD_MAX_TOKENS
  */
 static int8_t tokenize(char *input, char *argv[])
 {
@@ -94,8 +114,10 @@ static int8_t tokenize(char *input, char *argv[])
     return argc;
 }
 
-/** @brief Función para ejecutar la acción correspondiente a un error de comando
- *  @param errorAction: El tipo de error ocurrido
+/**
+ * @brief Envía por UART el mensaje de error correspondiente al tipo indicado.
+ *
+ * @param errorAction Tipo de error ocurrido durante el procesamiento del comando
  */
 static void cmdExecutError(cmd_status_t errorAction){
 	switch(errorAction){
@@ -123,19 +145,23 @@ static void cmdExecutError(cmd_status_t errorAction){
 }
 
 
+/** @brief Argumentos disponibles para el comando HELP */
 simpleArgumentDetail_t helpPayload[]={
 		{NULL, CMD_HELP, "Print this help message"},
 };
 
+/** @brief Argumentos disponibles para el comando READ */
 simpleArgumentDetail_t readPayload[]={
 	{"ANGLE", CMD_READ_ANGLE, "Read the current angle from the sensor"},
 	{"ACCELERATION", CMD_READ_ACCELERATION, "Read the current acceleration from the sensor"},
 };
 
+/** @brief Argumentos disponibles para el comando STATUS */
 simpleArgumentDetail_t statusPayload[]={
 		{NULL, CMD_STATUS, "Get the current status of the system"},
 };
 
+/** @brief Argumentos disponibles para el comando MODE */
 simpleArgumentDetail_t modePayload[]={
 		{NULL, CMD_MODE_GET, "Get the current display mode"},
 		{"TOGGLE", CMD_MODE_TOGGLE, "Toggle between digital and analog mode"},
@@ -143,12 +169,14 @@ simpleArgumentDetail_t modePayload[]={
 		{"ANALOG", CMD_MODE_ANALOG, "Set the display mode to analog"},
 };
 
+/** @brief Argumentos disponibles para el comando LOOPBACK */
 simpleArgumentDetail_t loopbackPayload[]={
 		{NULL, CMD_LOOPBACK_GET, "Get the current UART loopback state"},
 		{"ON", CMD_LOOPBACK_ON, "Enable UART RX->TX loopback (echo)"},
 		{"OFF", CMD_LOOPBACK_OFF, "Disable UART RX->TX loopback (echo)"},
 };
 
+/** @brief Tabla de comandos disponibles con sus argumentos asociados */
 const commandWithSimpleArguments_t availableCommands[] = {
 	{"HELP",1, helpPayload},
 	{"READ",2, readPayload},
@@ -157,8 +185,13 @@ const commandWithSimpleArguments_t availableCommands[] = {
 	{"LOOPBACK",3, loopbackPayload},
 };
 
-/** @brief Función para procesar la línea de comando recibida y ejecutar la acción correspondiente
- *  @return: El estado del procesamiento del comando
+/**
+ * @brief Procesa la línea de comando almacenada en el buffer y encola la acción.
+ *
+ * Tokeniza la línea, busca el comando en la tabla de comandos disponibles,
+ * verifica los argumentos y encola el comando correspondiente en la FIFO.
+ *
+ * @return Estado del procesamiento (CMD_OK si fue exitoso, o el código de error)
  */
 static cmd_status_t cmdProcessLine(void)
 {
@@ -204,7 +237,10 @@ static cmd_status_t cmdProcessLine(void)
 }
 
 /**
- * @brief Inicializa el módulo parser de comandos
+ * @brief Inicializa el módulo parser de comandos.
+ *
+ * Reinicia la FSM al estado IDLE, limpia la FIFO de comandos y el buffer
+ * de recepción.
  */
 void cmdParser_init(void){
 	cmdParserStateFsm = CMD_IDLE;
@@ -214,8 +250,12 @@ void cmdParser_init(void){
 }
 
 /**
- * @brief FSM del parser. Debe llamarse periódicamente desde el bucle principal.
- *        Procesa un byte por invocación (no bloqueante).
+ * @brief Actualiza la FSM del parser de comandos (no bloqueante).
+ *
+ * Debe llamarse periódicamente desde el bucle principal. Procesa un byte
+ * por invocación: en CMD_IDLE espera el primer carácter, en CMD_RECEIVING
+ * acumula bytes hasta detectar fin de línea, en CMD_PROCESS tokeniza y
+ * busca el comando, y en CMD_ERROR reporta el error por UART.
  */
 void cmdParser_poll(void){
 	static uint8_t currentDataIndex = 0;
@@ -284,7 +324,10 @@ void cmdParser_poll(void){
 }
 
 /**
- * @brief Imprime por UART la lista de comandos disponibles
+ * @brief Imprime por UART la lista de comandos disponibles con sus descripciones.
+ *
+ * Recorre la tabla de comandos registrados y envía el nombre de cada comando
+ * junto con sus argumentos y descripciones.
  */
 void cmdParser_printHelp(void){
 	uart_sendString((uint8_t*)"\nAvailable Commands with description:\r\n");
@@ -300,5 +343,3 @@ void cmdParser_printHelp(void){
 		}
 	}
 }
-
-

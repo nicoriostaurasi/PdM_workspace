@@ -1,8 +1,8 @@
-/*
- * API_ssd1306.c
- *
- *  Created on: 12 abr 2026
- *      Author: nicol
+/**
+ * @file API_ssd1306.c
+ * @brief Driver para la pantalla OLED SSD1306 via I2C.
+ * @date 12 abr 2026
+ * @author Nicolas Rios Taurasi
  */
 
 #include <string.h>
@@ -15,23 +15,53 @@
 
 #define SSD1306_DEACTIVATE_SCROLL 0x2E
 
-
+/**
+ * @brief Escribe un byte en un registro del SSD1306.
+ * @param reg Direccion del registro (byte de control).
+ * @param value Valor a escribir.
+ * @return true si la escritura fue exitosa, false en caso contrario.
+ */
 static bool ssd1306_writeReg(uint8_t reg, uint8_t value){
 	return i2c_memWrite(SSD1306_I2C_ADDR, reg, &value, 1, SSD1306_I2C_TIMEOUT);
 }
 
+/**
+ * @brief Escribe multiples bytes en un registro del SSD1306.
+ * @param reg Direccion del registro (byte de control).
+ * @param value Puntero al buffer con los datos a enviar.
+ * @param size Cantidad de bytes a escribir.
+ * @return true si la escritura fue exitosa, false en caso contrario.
+ */
 static bool ssd1306_writeMultiReg(uint8_t reg, uint8_t *value, uint16_t size){
 	return i2c_memWrite(SSD1306_I2C_ADDR, reg, value, size, SSD1306_I2C_TIMEOUT);
 }
 
+/**
+ * @brief Envia un comando al SSD1306 (registro de control 0x00).
+ * @param command Byte de comando a enviar.
+ * @return true si el envio fue exitoso, false en caso contrario.
+ */
 static bool ssd1306_sendCommand(uint8_t command){
 	return ssd1306_writeReg(0x00, command);
 }
 
+/**
+ * @brief Verifica si el SSD1306 responde en el bus I2C.
+ * @return true si el dispositivo esta listo, false en caso contrario.
+ */
 bool ssd1306_isAlive(void){
     return i2c_isDeviceReady(SSD1306_I2C_ADDR, 1, SSD1306_I2C_TIMEOUT);
 }
 
+/**
+ * @brief Inicializa la pantalla OLED SSD1306.
+ *
+ * Verifica la presencia del dispositivo, envia la secuencia completa de
+ * configuracion (modo de direccionamiento por pagina, contraste, multiplex,
+ * oscilador, pre-carga, DC-DC, etc.) y desactiva el scroll.
+ *
+ * @return true si la inicializacion fue exitosa, false en caso contrario.
+ */
 bool ssd1306_init(void){
 	bool ret;
 	ret = i2c_isDeviceReady(SSD1306_I2C_ADDR, 1, SSD1306_I2C_TIMEOUT);
@@ -78,6 +108,15 @@ bool ssd1306_init(void){
     return true;
 }
 
+/**
+ * @brief Actualiza la pantalla enviando el framebuffer completo pagina por pagina.
+ *
+ * Recorre las 8 paginas del display y envia la mitad del ancho por transferencia,
+ * dividiendo cada pagina en dos escrituras consecutivas.
+ *
+ * @param disp Puntero a la estructura display_t que contiene el framebuffer y dimensiones.
+ * @return true si la actualizacion fue exitosa, false si disp es NULL o fallo alguna escritura.
+ */
 bool ssd1306_updateScreen(display_t *disp) {
 	uint8_t m;
 
@@ -108,4 +147,3 @@ bool ssd1306_updateScreen(display_t *disp) {
 	}
 	return true;
 }
-
