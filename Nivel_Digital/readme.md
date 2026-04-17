@@ -5,11 +5,11 @@ Programación de Microcontroladores
 Especialización en Sistemas Embebidos – FIUBA
 
 ## Alumno
-Nombre: Ing. Nicolás Gabriel Rios Taurasi
-Email: nicolas.rios.taurasi@gmail.com/nicoriostaurasi@frba.utn.edu.ar
+Nombre: Ing. Nicolás Gabriel Rios Taurasi  
+Email: nicolas.rios.taurasi@gmail.com/nicoriostaurasi@frba.utn.edu.ar  
 
 ## Docente
-Nombre: Mg. Ing. Patricio Bos
+Nombre: Mg. Ing. Patricio Bos  
 Email: pbos@fi.uba.ar
 
 ## Ciclo lectivo
