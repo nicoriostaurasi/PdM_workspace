@@ -155,6 +155,11 @@ bool adxl345_readRawAcceleration(adxl345_raw_t *raw)
         return false;
     }
 
+    // El ADXL345 entrega cada eje como dos registros consecutivos en formato
+    // little-endian (DATA_x0 = LSB, DATA_x1 = MSB). Se recompone a int16_t
+    // desplazando el MSB una posición de byte y aplicando OR con el LSB, de
+    // modo que el bit de signo del MSB quede en el bit 15 y preserve el
+    // complemento a dos que utiliza el sensor a full-scale.
     raw->x = (int16_t)((rawData[1] << BYTE_SHIFT) | rawData[0]);
     raw->y = (int16_t)((rawData[3] << BYTE_SHIFT) | rawData[2]);
     raw->z = (int16_t)((rawData[5] << BYTE_SHIFT) | rawData[4]);
