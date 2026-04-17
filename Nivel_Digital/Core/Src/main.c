@@ -100,9 +100,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	debounce_fsmUpdate();
-	digitalAngleMeter_fsmUpdate();
-	cmdParser_poll();
+    debounce_fsmUpdate();
+    digitalAngleMeter_fsmUpdate();
+    cmdParser_poll();
 	/* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
