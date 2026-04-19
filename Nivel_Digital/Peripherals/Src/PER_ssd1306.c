@@ -70,6 +70,7 @@ bool ssd1306_init(void){
     }
 
     // Tomado como referencia
+    // https://github.com/adafruit/Adafruit_SSD1306/tree/master
     ssd1306_sendCommand(0xAE); //display off
     ssd1306_sendCommand(0x20); //Set Memory Addressing Mode
     ssd1306_sendCommand(0x10); //00,Horizontal Addressing Mode;01,Vertical Addressing Mode;10,Page Addressing Mode (RESET);11,Invalid
